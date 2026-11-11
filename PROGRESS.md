@@ -75,3 +75,11 @@
 - [x] Kill board-object tweens before destroying board objects during refresh to reduce stale animation work.
 - [x] Reduced win-confetti particle count from 28 to 18 for lighter rendering on low-end devices.
 - [ ] Verify sound, scene transitions, and performance on a physical Android device; not yet tested.
+
+
+## Batch 11 — Touch Accessibility & Saved Preferences (CI pending)
+- [x] Enlarged gameplay sound, undo, pause, home and booster hit areas without changing their visual layout or game rules.
+- [x] Enlarged Home Play, How to Play, Settings and World Map Back touch targets for easier mobile tapping.
+- [x] Gameplay now loads and persists the saved sound preference; music ambience respects the saved music preference.
+- [x] Haptic feedback now respects the saved vibration preference for blocked moves, successful exits and level results.
+- [ ] Verify touch accuracy and settings persistence on a physical Android device; not yet tested.
