@@ -57,7 +57,7 @@ export class HomeScene extends Phaser.Scene {
   }
 
   private showTutorial():void{
-    const panel=this.add.rectangle(180,330,320,360,0x0b1520,.98).setStrokeStyle(2,0xfbbf24).setDepth(20);
+    const panel=this.add.rectangle(180,330,320,360,0x0b1520,.98).setStrokeStyle(2,0xfbbf24);
     const heading=this.add.text(180,185,'HOW TO PLAY',{fontSize:'20px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(.5);
     const copy=this.add.text(180,310,'1. Tap a vehicle to send it out.\n\n2. Make sure its exit lane is clear.\n\n3. Match passengers with vehicle colours.\n\n4. Watch the signal lanes.\n\n5. Clear every vehicle to win!',{fontSize:'13px',color:'#f8fafc',align:'left',lineSpacing:7,wordWrap:{width:270}}).setOrigin(.5);
     const close=this.add.text(180,470,'GOT IT',{fontSize:'13px',color:'#101923',backgroundColor:'#fbbf24',padding:{x:22,y:9}}).setOrigin(.5).setInteractive();
