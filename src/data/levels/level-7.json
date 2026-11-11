@@ -1,0 +1,1 @@
+{"id":7,"name":"Green Route","width":6,"height":6,"par":1,"passengers":["#22c55e"],"vehicles":[{"id":"auto-7","type":"auto","color":"#22c55e","x":2,"y":2,"length":1,"orientation":"horizontal","facing":"right","seats":1}],"obstacles":[]}
