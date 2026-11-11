@@ -149,7 +149,7 @@ export class GameScene extends Phaser.Scene {
       this.tweens.add({targets:group,angle:1.2,duration:1800,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
     }
   }
-  private showBoosterFeedback(label:string,color:number=0xfbbf24):void{
+  private showBoosterFeedback(label:string):void{
     const feedback=this.add.text(180,425,label,{fontSize:'13px',color:'#ffffff',fontStyle:'bold',backgroundColor:'#172b3b',padding:{x:12,y:7},stroke:'#0b1220',strokeThickness:2}).setOrigin(.5).setAlpha(0).setScale(.82);
     this.tweens.add({targets:feedback,alpha:1,scale:1,y:405,duration:180,ease:'Back.Out',onComplete:()=>this.tweens.add({targets:feedback,alpha:0,y:385,delay:520,duration:260,onComplete:()=>feedback.destroy()})});
     this.tweens.add({targets:this.status,scale:1.08,duration:100,yoyo:true});
