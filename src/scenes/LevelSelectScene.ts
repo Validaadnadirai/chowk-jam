@@ -27,7 +27,7 @@ export class LevelSelectScene extends Phaser.Scene {
     const roads=this.add.graphics();
     roads.lineStyle(18,0x263b4c,.8);roads.beginPath();roads.moveTo(-20,170);roads.lineTo(100,230);roads.lineTo(260,190);roads.lineTo(390,270);roads.moveTo(40,125);roads.lineTo(115,300);roads.lineTo(250,390);roads.lineTo(330,520);roads.strokePath();
     roads.lineStyle(2,0xfbbf24,.45);roads.beginPath();roads.moveTo(-20,170);roads.lineTo(100,230);roads.lineTo(260,190);roads.lineTo(390,270);roads.moveTo(40,125);roads.lineTo(115,300);roads.lineTo(250,390);roads.lineTo(330,520);roads.strokePath();
-    this.add.text(24,28,'‹  BACK',{fontSize:'13px',color:'#fbbf24',fontStyle:'bold'}).setInteractive({useHandCursor:true}).on('pointerdown',()=>this.scene.start('Home'));
+    this.add.text(24,28,'‹  BACK',{fontSize:'13px',color:'#fbbf24',fontStyle:'bold'}).setInteractive(new Phaser.Geom.Rectangle(-8,-18,88,44),Phaser.Geom.Rectangle.Contains).on('pointerdown',()=>this.scene.start('Home'));
     this.add.text(width/2,38,'YOUR CITY',{fontSize:'10px',color:'#8fa6b8',letterSpacing:3}).setOrigin(.5);
     this.add.text(width/2,70,'WORLD MAP',{fontSize:'27px',color:'#f8fafc',fontStyle:'bold'}).setOrigin(.5);
     this.add.text(width/2,101,'Choose a chowk and clear the traffic',{fontSize:'10px',color:'#9db0bf'}).setOrigin(.5);

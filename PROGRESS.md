@@ -38,9 +38,48 @@
 - [x] Latest Batch 6 CI and Android debug APK workflows passed on commit `7915450`.
 - [ ] Physical Android install, visual review and performance profiling remain outstanding.
 
-## Batch 7 — World Map & Level Selection (in progress)
+## Batch 7 — World Map & Level Selection (CI passed; device QA pending)
 - [x] Added a city-map level selection scene with three themed districts and ten level nodes.
 - [x] Locked/unlocked/completed level states are driven by existing local progression data.
 - [x] Home Play now opens the world map; selecting an unlocked node launches its matching level.
 - [ ] Add richer district artwork and verify all navigation states on a physical Android device.
-- [ ] Run CI, level validation, production build and Android APK workflow for this batch.
+- [x] GitHub CI passed on latest Batch 7 head `e461f42` (lint, tests, level validation and production build are covered by CI).
+- [ ] Run/verify the Android APK workflow for this stacked batch after its dependency is integrated into `main`.
+- [ ] Verify navigation and responsive layout on a physical Android device.
+
+
+## Batch 8 — Vehicle, Passenger & Junction Feedback (CI passed; device QA pending)
+- [x] Added subtle, low-cost idle motion to vehicles while preserving their existing hitboxes and exit logic.
+- [x] Added staggered passenger-stream movement and pulse animation.
+- [x] Added a compact waiting-bay change pulse so boarding/departure state changes are visually acknowledged.
+- [x] Added short camera fade transitions when leaving gameplay and when advancing/retrying after a result.
+- [x] Added an animated result-panel entrance and restrained next/retry action pulse.
+- [x] Added paired A/B signal lamps that reflect the active lane phase and pulse on phase changes.
+- [x] Added restrained idle motion to buffalo and handcart obstacles without changing collision or level data.
+- [x] GitHub CI passed for signal lamps and obstacle idle feedback on commit `1b390de`.
+- [x] Added booster-use feedback and guarded the result overlay so it cannot be recreated on repeated refreshes.
+- [x] Added lightweight vehicle-exit spark feedback using short-lived particles.
+- [ ] Verify animation quality on a physical Android device; no device QA is claimed yet.
+
+
+## Batch 9 — Gameplay Feedback (CI passed; device QA pending)
+- [x] Added booster-use confirmation feedback and a guard against recreating the result overlay on repeated refreshes.
+- [x] Added short-lived vehicle-exit spark particles.
+- [x] GitHub Actions push and pull-request CI passed on commit `54b44832beb030e6cf413d47b0d6636da17e1b72`.
+- [ ] Physical Android animation and performance QA remains outstanding.
+
+## Batch 10 — Audio Polish & Runtime Efficiency (CI pending)
+- [x] Added distinct audio confirmation cues for booster actions and refined the blocked-move tone.
+- [x] Resume suspended Web Audio contexts after user interaction where supported; audio remains optional.
+- [x] Clean up ambient audio and close the AudioContext when the scene shuts down or is destroyed.
+- [x] Kill board-object tweens before destroying board objects during refresh to reduce stale animation work.
+- [x] Reduced win-confetti particle count from 28 to 18 for lighter rendering on low-end devices.
+- [ ] Verify sound, scene transitions, and performance on a physical Android device; not yet tested.
+
+
+## Batch 11 — Touch Accessibility & Saved Preferences (CI pending)
+- [x] Enlarged gameplay sound, undo, pause, home and booster hit areas without changing their visual layout or game rules.
+- [x] Enlarged Home Play, How to Play, Settings and World Map Back touch targets for easier mobile tapping.
+- [x] Gameplay now loads and persists the saved sound preference; music ambience respects the saved music preference.
+- [x] Haptic feedback now respects the saved vibration preference for blocked moves, successful exits and level results.
+- [ ] Verify touch accuracy and settings persistence on a physical Android device; not yet tested.
