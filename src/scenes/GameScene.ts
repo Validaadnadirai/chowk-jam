@@ -95,8 +95,19 @@ export class GameScene extends Phaser.Scene {
     const label=vehicle.type==='erickshaw'?'E-R':vehicle.type.toUpperCase();
     this.boardLayer.add(this.add.text(px,py,label,{fontSize:'10px',color:'#101923',fontStyle:'bold'}).setOrigin(.5));
   }
+  private startAmbient():void{
+    if(!this.soundEnabled)return;
+    try{
+      this.audioContext??=new AudioContext();
+      if(this.musicOscillator&&this.musicGain){this.musicGain.gain.setTargetAtTime(.003,this.audioContext.currentTime,.08);return;}
+      this.musicOscillator=this.audioContext.createOscillator();this.musicGain=this.audioContext.createGain();
+      this.musicOscillator.type='sine';this.musicOscillator.frequency.value=110;this.musicGain.gain.value=.003;
+      this.musicOscillator.connect(this.musicGain);this.musicGain.connect(this.audioContext.destination);this.musicOscillator.start();
+    }catch{/* Ambient audio is optional. */}
+  }
   private playTone(frequency:number,duration:number):void{
-    try{this.audioContext??=new AudioContext();const oscillator=this.audioContext.createOscillator();const gain=this.audioContext.createGain();oscillator.frequency.value=frequency;gain.gain.setValueAtTime(.035,this.audioContext.currentTime);gain.gain.exponentialRampToValueAtTime(.001,this.audioContext.currentTime+duration/1000);oscillator.connect(gain);gain.connect(this.audioContext.destination);oscillator.start();oscillator.stop(this.audioContext.currentTime+duration/1000);}catch{/* Audio is optional; gameplay remains available without it. */}
+    if(!this.soundEnabled)return;
+    try{this.audioContext??=new AudioContext();this.startAmbient();const oscillator=this.audioContext.createOscillator();const gain=this.audioContext.createGain();oscillator.frequency.value=frequency;gain.gain.setValueAtTime(.035,this.audioContext.currentTime);gain.gain.exponentialRampToValueAtTime(.001,this.audioContext.currentTime+duration/1000);oscillator.connect(gain);gain.connect(this.audioContext.destination);oscillator.start();oscillator.stop(this.audioContext.currentTime+duration/1000);}catch{/* Audio is optional; gameplay remains available without it. */}
   }
   private showResult(won:boolean):void{
     const title=won?'CHOWK CLEAR!':'TRY AGAIN';
