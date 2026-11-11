@@ -38,9 +38,19 @@
 - [x] Latest Batch 6 CI and Android debug APK workflows passed on commit `7915450`.
 - [ ] Physical Android install, visual review and performance profiling remain outstanding.
 
-## Batch 7 — World Map & Level Selection (in progress)
+## Batch 7 — World Map & Level Selection (CI passed; device QA pending)
 - [x] Added a city-map level selection scene with three themed districts and ten level nodes.
 - [x] Locked/unlocked/completed level states are driven by existing local progression data.
 - [x] Home Play now opens the world map; selecting an unlocked node launches its matching level.
 - [ ] Add richer district artwork and verify all navigation states on a physical Android device.
-- [ ] Run CI, level validation, production build and Android APK workflow for this batch.
+- [x] GitHub CI passed on latest Batch 7 head `e461f42` (lint, tests, level validation and production build are covered by CI).
+- [ ] Run/verify the Android APK workflow for this stacked batch after its dependency is integrated into `main`.
+- [ ] Verify navigation and responsive layout on a physical Android device.
+
+
+## Batch 8 — Vehicle & Passenger Animation (in progress)
+- [x] Added subtle, low-cost idle motion to vehicles while preserving their existing hitboxes and exit logic.
+- [x] Added staggered passenger-stream movement and pulse animation.
+- [ ] Add polished movement/boarding/departure feedback and scene transitions.
+- [ ] Run lint, tests, level validation and production build; inspect animation lifecycle and low-end performance.
+- [ ] Verify animation quality on a physical Android device; no device QA is claimed yet.
