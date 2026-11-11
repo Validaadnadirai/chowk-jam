@@ -56,10 +56,41 @@ export class LevelSelectScene extends Phaser.Scene {
       {name:'OLD CITY',range:'LEVELS 06—08',y:325},
       {name:'FESTIVAL ROAD',range:'LEVELS 09—10',y:505}
     ];
-    for(const d of districts){
+    districts.forEach((d, districtIndex)=>{
+      // Compact, low-cost district landmarks sit behind the level nodes.
+      const landmark=this.add.graphics().setDepth(1);
+      if(districtIndex===0){
+        // Modern street: shopfront blocks and street lamps.
+        for(let i=0;i<4;i++){
+          const lx=24+i*82;
+          landmark.fillStyle(i%2?0x29495a:0x203d50,.72);
+          landmark.fillRoundedRect(lx,d.y+22,42,28,3);
+          landmark.fillStyle(0x8bd3e6,.55);landmark.fillRect(lx+6,d.y+28,10,9);landmark.fillRect(lx+24,d.y+28,10,9);
+          landmark.fillStyle(0xfbbf24,.7);landmark.fillRect(lx+17,d.y+13,8,3);
+        }
+      }else if(districtIndex===1){
+        // Old bazaar: warm haveli facades, arches and hanging awnings.
+        for(let i=0;i<4;i++){
+          const lx=24+i*82;
+          landmark.fillStyle(0x704b3c,.78);landmark.fillRoundedRect(lx,d.y+22,42,30,2);
+          landmark.fillStyle(0xc58b5b,.9);landmark.fillRect(lx+4,d.y+19,34,4);
+          landmark.lineStyle(2,0xe9bd83,.8);landmark.strokeCircle(lx+21,d.y+34,7);
+          landmark.fillStyle(0x9d5142,.8);landmark.fillTriangle(lx+3,d.y+22,lx+39,d.y+22,lx+21,d.y+29);
+        }
+      }else{
+        // Festival road: colorful pennants, lanterns and a decorated gateway.
+        landmark.lineStyle(2,0x9b6bba,.8);landmark.lineBetween(20,d.y+24,350,d.y+24);
+        for(let i=0;i<9;i++){
+          const px=26+i*39;
+          landmark.fillStyle([0xf472b6,0xfbbf24,0x60d6c5][i%3],.9);
+          landmark.fillTriangle(px,d.y+24,px+12,d.y+24,px+6,d.y+38);
+        }
+        landmark.lineStyle(3,0xfbbf24,.8);landmark.strokeRect(154,d.y+38,44,16);
+        landmark.fillStyle(0xffd36b,.9);landmark.fillCircle(176,d.y+34,4);
+      }
       this.add.text(24,d.y,d.name,{fontSize:'10px',color:'#f8fafc',fontStyle:'bold',letterSpacing:1}).setDepth(2);
       this.add.text(336,d.y,d.range,{fontSize:'8px',color:'#91a4b4'}).setOrigin(1,0).setDepth(2);
-    }
+    });
     LEVELS.forEach((level,index)=>{
       const unlocked=level.id<=this.progress.unlockedLevel;
       const completed=this.progress.completedLevels.includes(level.id);
