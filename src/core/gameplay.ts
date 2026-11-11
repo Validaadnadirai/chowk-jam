@@ -33,7 +33,7 @@ export function attemptVehicleExit(state: FullGameState, vehicleId: string): Ful
   const nextGrid=exitVehicle(state.grid,vehicleId,{closedCells:closed});
   let next:FullGameState={...state,grid:nextGrid,bay:[...state.bay,{vehicle,boarded:0}]};
   next=settleBay(next);
-  if(next.moveLimit!==undefined && next.grid.moves>=next.moveLimit && !isWon(next.grid)) return {...next,result:'failed',failReason:'move-limit'};
+  if(next.moveLimit!==undefined && next.grid.moves>=next.moveLimit && !(isWon(next.grid) && next.bay.length===0)) return {...next,result:'failed',failReason:'move-limit'};
   if(isWon(next.grid) && next.bay.length===0) return {...next,result:'won'};
   if(next.bay.length>=next.bayCapacity && next.bay.every(item=>!streamHasColor(next,item.vehicle.color))) return {...next,result:'failed',failReason:'bay-deadlock'};
   return next;
