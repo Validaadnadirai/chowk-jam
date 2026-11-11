@@ -196,7 +196,7 @@ export class GameScene extends Phaser.Scene {
     if(context&&context.state!=='closed')void context.close().catch(()=>undefined);
   }
   private startAmbient():void{
-    if(!this.soundEnabled)return;
+    if(!this.soundEnabled||!this.progress.music)return;
     try{
       this.audioContext??=new AudioContext();
       if(this.musicOscillator&&this.musicGain){this.musicGain.gain.setTargetAtTime(.003,this.audioContext.currentTime,.08);return;}
