@@ -48,7 +48,7 @@
 - [ ] Verify navigation and responsive layout on a physical Android device.
 
 
-## Batch 8 — Vehicle, Passenger & Junction Feedback (in progress)
+## Batch 8 — Vehicle, Passenger & Junction Feedback (CI passed; device QA pending)
 - [x] Added subtle, low-cost idle motion to vehicles while preserving their existing hitboxes and exit logic.
 - [x] Added staggered passenger-stream movement and pulse animation.
 - [x] Added a compact waiting-bay change pulse so boarding/departure state changes are visually acknowledged.
@@ -56,5 +56,7 @@
 - [x] Added an animated result-panel entrance and restrained next/retry action pulse.
 - [x] Added paired A/B signal lamps that reflect the active lane phase and pulse on phase changes.
 - [x] Added restrained idle motion to buffalo and handcart obstacles without changing collision or level data.
-- [ ] Run lint, tests, level validation and production build; inspect animation lifecycle and low-end performance.
+- [x] GitHub CI passed for signal lamps and obstacle idle feedback on commit `1b390de`.
+- [x] Added booster-use feedback and guarded the result overlay so it cannot be recreated on repeated refreshes.
+- [x] Added lightweight vehicle-exit spark feedback using short-lived particles.
 - [ ] Verify animation quality on a physical Android device; no device QA is claimed yet.
