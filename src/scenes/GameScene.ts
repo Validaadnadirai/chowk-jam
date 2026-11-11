@@ -27,6 +27,7 @@ export class GameScene extends Phaser.Scene {
   private musicOscillator?:OscillatorNode;
   private musicGain?:GainNode;
   private soundEnabled=true;
+  private lastSignalPhase=0;
   constructor(){super('Game');}
   create():void{
     this.cameras.main.setBackgroundColor('#101923');
@@ -55,7 +56,7 @@ export class GameScene extends Phaser.Scene {
     this.loadLevel(LEVELS[0]);
   }
   private loadLevel(level:LevelDefinition):void{
-    this.state=createFullGame(level);this.history=[];this.paused=false;this.levelTitle.setText('LEVEL '+level.id+' • '+level.name.toUpperCase());this.refresh();
+    this.state=createFullGame(level);this.history=[];this.paused=false;this.lastSignalPhase=0;this.levelTitle.setText('LEVEL '+level.id+' • '+level.name.toUpperCase());this.refresh();
   }
   private refresh():void{
     this.boardLayer.removeAll(true);
@@ -68,11 +69,14 @@ export class GameScene extends Phaser.Scene {
     }
     for(const vehicle of this.state.grid.vehicles)this.drawVehicle(vehicle);
     const bay=this.state.bay.map(item=>item.vehicle.type.toUpperCase()+' '+item.boarded+'/'+item.vehicle.seats).join('   ');
-    this.bayText.setText(bay||'— EMPTY —');
+    this.bayText.setText(bay||'— EMPTY —');this.tweens.add({targets:this.bayText,scale:1.08,duration:90,yoyo:true});
     const colors=this.state.passengerStream.map((p,i)=>this.add.circle(48+i*22,535,6,Phaser.Display.Color.HexStringToColor(p.color).color));
     colors.forEach(circle=>{this.boardLayer.add(circle);this.tweens.add({targets:circle,x:circle.x-18,duration:900,repeat:-1,ease:'Linear'});});
     this.status.setText(levelStatus(this.state));
     const signal=this.state.signal;
+    const phase=signal?Math.floor(this.state.grid.moves/signal.flipEvery)%2:0;
+    if(signal&&phase!==this.lastSignalPhase){this.tweens.add({targets:this.signalText,scale:1.15,duration:110,yoyo:true});this.playTone(360,65);}
+    this.lastSignalPhase=phase;
     this.signalText.setText(signal?'SIGNAL: '+(Math.floor(this.state.grid.moves/signal.flipEvery)%2===0?'A OPEN • B CLOSED':'B OPEN • A CLOSED')+'  NEXT '+(Math.floor(this.state.grid.moves/signal.flipEvery)%2===0?'B':'A'):'SIGNAL: NOT ACTIVE');
     this.signalText.setColor(this.state.result==='failed'?'#f87171':'#86efac');
     if(this.state.result==='won')this.showResult(true);
