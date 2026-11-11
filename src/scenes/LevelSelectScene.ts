@@ -31,9 +31,9 @@ export class LevelSelectScene extends Phaser.Scene {
     this.add.text(width/2,70,'WORLD MAP',{fontSize:'27px',color:'#f8fafc',fontStyle:'bold'}).setOrigin(.5);
     this.add.text(width/2,101,'Choose a chowk and clear the traffic',{fontSize:'10px',color:'#9db0bf'}).setOrigin(.5);
     const districts=[
-      {name:'CITY STREETS',range:'LEVELS 01—05',y:151,color:0xfbbf24},
-      {name:'OLD CITY',range:'LEVELS 06—08',y:345,color:0x38bdf8},
-      {name:'FESTIVAL ROAD',range:'LEVELS 09—10',y:505,color:0xf472b6}
+      {name:'CITY STREETS',range:'LEVELS 01—05',y:145},
+      {name:'OLD CITY',range:'LEVELS 06—08',y:325},
+      {name:'FESTIVAL ROAD',range:'LEVELS 09—10',y:505}
     ];
     for(const d of districts){
       this.add.text(24,d.y,d.name,{fontSize:'10px',color:'#f8fafc',fontStyle:'bold',letterSpacing:1}).setDepth(2);
@@ -42,11 +42,11 @@ export class LevelSelectScene extends Phaser.Scene {
     LEVELS.forEach((level,index)=>{
       const unlocked=level.id<=this.progress.unlockedLevel;
       const completed=this.progress.completedLevels.includes(level.id);
-      const col=index%2,row=Math.floor(index/2);
+      const col=index%2;
       const x=col===0?101:259;
-      const y=index<5?198+row*63:index<8?382+(index-5)*48:548+(index-8)*45;
+      const y=index<5?180+Math.floor(index/2)*55:index<8?360+(index-5)*48:540+(index-8)*48;
       const compact=index>=8;
-      const w=compact?128:142,h=compact?36:48;
+      const w=compact?142:142,h=compact?40:44;
       const card=this.add.rectangle(x,y,w,h,unlocked?0x1b3446:0x101e2a,.96).setStrokeStyle(1,completed?0xfbbf24:unlocked?0x547187:0x293b49).setDepth(3);
       const marker=this.add.circle(x-w/2+15,y,9,completed?0xfbbf24:unlocked?0x38bdf8:0x334657).setDepth(4);
       this.add.text(x-w/2+15,y,completed?'✓':unlocked?String(level.id):'🔒',{fontSize:'9px',color:'#0b1420',fontStyle:'bold'}).setOrigin(.5).setDepth(5);
@@ -57,6 +57,6 @@ export class LevelSelectScene extends Phaser.Scene {
         marker.setInteractive({useHandCursor:true}).on('pointerdown',()=>this.scene.start('Game',{levelId:level.id}));
       }
     });
-    this.add.text(width/2,620,'CLEAR A LEVEL TO UNLOCK THE NEXT',{fontSize:'8px',color:'#7890a4',letterSpacing:1}).setOrigin(.5);
+    this.add.text(width/2,625,'CLEAR A LEVEL TO UNLOCK THE NEXT',{fontSize:'8px',color:'#7890a4',letterSpacing:1}).setOrigin(.5);
   }
 }
