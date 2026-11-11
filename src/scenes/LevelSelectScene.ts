@@ -23,6 +23,26 @@ export class LevelSelectScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#0b1420');
     const bg=this.add.graphics();
     bg.fillGradientStyle(0x0b1420,0x14283a,0x101c29,0x0b1420,1);bg.fillRect(0,0,width,640);
+    // Three softly tinted map zones establish a visual identity for each district.
+    const districtArt=this.add.graphics();
+    districtArt.fillStyle(0x1d5261,.17); districtArt.fillRoundedRect(8,126,width-16,174,14);
+    districtArt.fillStyle(0x76513a,.16); districtArt.fillRoundedRect(8,306,width-16,174,14);
+    districtArt.fillStyle(0x713b55,.17); districtArt.fillRoundedRect(8,486,width-16,128,14);
+    // City Streets: modern low-rise skyline and shop awnings.
+    districtArt.fillStyle(0x5fa4b7,.28);
+    districtArt.fillRect(16,252,22,30); districtArt.fillRect(42,238,17,44); districtArt.fillRect(63,258,25,24);
+    districtArt.fillStyle(0xf5c96b,.55);
+    for(let i=0;i<4;i++) districtArt.fillRect(18+i*17,265-(i%2)*7,7,3);
+    // Old City: warm haveli roofline, arch and minaret silhouette.
+    districtArt.fillStyle(0xc18a57,.3);
+    districtArt.fillRect(width-46,416,24,42); districtArt.fillTriangle(width-50,416,width-34,400,width-18,416);
+    districtArt.fillRect(width-17,392,5,66); districtArt.fillCircle(width-14.5,390,4,0xc18a57,.3);
+    districtArt.lineStyle(3,0xd7a66c,.45); districtArt.strokeCircle(width-34,438,8);
+    // Festival Road: bunting and glowing festoon points.
+    districtArt.lineStyle(1.5,0xf2a6bd,.48); districtArt.beginPath(); districtArt.moveTo(18,520); districtArt.lineTo(width-18,520); districtArt.strokePath();
+    for(let i=0;i<9;i++){const x=22+i*(width-44)/8;districtArt.fillStyle(i%2?0xf6cf70:0xf19ab5,.72);districtArt.fillTriangle(x,520,x+5,530,x+10,520);}
+    districtArt.fillStyle(0xffd77a,.55); districtArt.fillCircle(width-30,565,4); districtArt.fillCircle(width-52,580,3); districtArt.fillCircle(width-18,592,3);
+    districtArt.setDepth(0);
     // Stylised city map: connected roads and district landmarks.
     const roads=this.add.graphics();
     roads.lineStyle(18,0x263b4c,.8);roads.beginPath();roads.moveTo(-20,170);roads.lineTo(100,230);roads.lineTo(260,190);roads.lineTo(390,270);roads.moveTo(40,125);roads.lineTo(115,300);roads.lineTo(250,390);roads.lineTo(330,520);roads.strokePath();
