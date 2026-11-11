@@ -63,7 +63,8 @@ export class GameScene extends Phaser.Scene {
     this.addBoosterButton(136,600,'+ BAY','extra-slot',80);
     this.addBoosterButton(224,600,'SHUFFLE','shuffle',20);
     this.addBoosterButton(312,600,'UNDO','undo',25);
-    const requested=LEVELS.find(level=>level.id===data.levelId&&level.id<=this.progress.unlockedLevel);\n    this.loadLevel(requested??LEVELS[Math.min(this.progress.unlockedLevel-1,LEVELS.length-1)]??LEVELS[0]);
+    const requested=LEVELS.find(level=>level.id===data.levelId&&level.id<=this.progress.unlockedLevel);
+    this.loadLevel(requested??LEVELS[Math.min(this.progress.unlockedLevel-1,LEVELS.length-1)]??LEVELS[0]);
   }
   private loadLevel(level:LevelDefinition):void{
     this.state=createFullGame(level);this.history=[];this.paused=false;this.lastSignalPhase=0;this.levelTitle.setText('LEVEL '+level.id+' • '+level.name.toUpperCase());this.refresh();
