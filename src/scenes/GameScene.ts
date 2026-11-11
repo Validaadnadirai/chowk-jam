@@ -98,7 +98,7 @@ export class GameScene extends Phaser.Scene {
     const bay=this.state.bay.map(item=>item.vehicle.type.toUpperCase()+' '+item.boarded+'/'+item.vehicle.seats).join('   ');
     this.bayText.setText(bay||'— EMPTY —');
     const colors=this.state.passengerStream.map((p,i)=>this.add.circle(48+i*22,535,6,Phaser.Display.Color.HexStringToColor(p.color).color));
-    colors.forEach(circle=>{this.boardLayer.add(circle);this.tweens.add({targets:circle,x:circle.x-18,duration:900,repeat:-1,ease:'Linear'});});
+    colors.forEach((circle,index)=>{this.boardLayer.add(circle);this.tweens.add({targets:circle,x:circle.x-18,duration:900+index*70,repeat:-1,ease:'Linear'});this.tweens.add({targets:circle,scale:1.22,alpha:.72,duration:420+index*35,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});});
     this.status.setText(levelStatus(this.state));
     const signal=this.state.signal,phase=signal?Math.floor(this.state.grid.moves/signal.flipEvery)%2:0;
     if(signal&&phase!==this.lastSignalPhase){this.tweens.add({targets:this.signalText,scale:1.15,duration:110,yoyo:true});this.playTone(360,65);}
@@ -138,10 +138,12 @@ export class GameScene extends Phaser.Scene {
     const px=LEFT+vehicle.x*CELL+(horizontal?w/2+3.5:CELL/2),py=TOP+vehicle.y*CELL+(horizontal?CELL/2:h/2+3.5);
     const group=this.add.container(px,py).setSize(w,h).setInteractive(new Phaser.Geom.Rectangle(-w/2,-h/2,w,h),Phaser.Geom.Rectangle.Contains);
     group.add(createVehicleArt(this,vehicle,w,h));
+    const idleTween=this.tweens.add({targets:group,y:py-1.2,duration:Phaser.Math.Between(1150,1650),yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
     group.on('pointerdown',()=>{
       if(this.paused||this.state.result!=='playing')return;
+      idleTween.pause();
       const next=attemptVehicleExit(this.state,vehicle.id);
-      if(next===this.state){this.tweens.add({targets:group,x:px+5,y:py,duration:45,yoyo:true,repeat:2});this.playTone(130,90);if('vibrate' in navigator)navigator.vibrate?.(35);return;}
+      if(next===this.state){this.tweens.add({targets:group,x:px+5,duration:45,yoyo:true,repeat:2,onComplete:()=>idleTween.resume()});this.playTone(130,90);if('vibrate' in navigator)navigator.vibrate?.(35);return;}
       this.history.push(structuredClone(this.state));
       this.tweens.add({targets:group,alpha:0,scaleX:.75,scaleY:.75,duration:180,onComplete:()=>{this.state=next;this.playTone(520,80);if('vibrate' in navigator)navigator.vibrate?.(18);this.refresh();}});
     });
