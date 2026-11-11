@@ -104,3 +104,11 @@
 - [x] Kept all obstacle kinds, collision coordinates, level JSON, movement rules and gameplay state unchanged.
 - [ ] Verify board framing and obstacle readability across small Android screens; physical-device QA is not yet done.
 - [ ] GitHub CI for this batch is pending; do not mark it passed until the exact commit succeeds.
+
+
+## Batch 14 — Premium Gameplay HUD & Mobile Action Layout (CI pending)
+- [x] Milestone 1: Added distinct, restrained HUD surfaces for the gameplay header, waiting-bay/passenger information and bottom action area to improve visual grouping.
+- [x] Milestone 2: Separated booster and navigation rows vertically and tightened their hit regions to reduce accidental overlap while preserving the existing actions and game rules.
+- [x] Rebalanced waiting-bay, coin, passenger-stream and route-hint positions within the existing portrait scene; board geometry and level data remain unchanged.
+- [ ] Verify visual spacing, readability and touch accuracy on physical Android devices; no device QA is claimed.
+- [ ] GitHub CI for the exact Batch 14 head is pending; do not treat it as passed until the run completes successfully.
