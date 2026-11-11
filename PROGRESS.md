@@ -32,6 +32,6 @@
 ## Batch 6 — Premium Visual Foundation (in progress)
 - [x] Added a reusable Phaser vector vehicle-art renderer with separate silhouettes and roof/window treatments for auto-rickshaw, electric rickshaw, tempo and bus.
 - [x] Integrated the renderer into the existing gameplay scene without changing vehicle movement, hitboxes, exit rules, progression or save data.
-- [ ] Expand the vehicle data model and asset manifest for hatchback, taxi and mini-truck only alongside compatible level-schema tests.
-- [ ] Upgrade road surface, lane markings and gameplay HUD; complete responsive visual review.
+- [x] Expanded the vehicle type model and vector renderer to include hatchback, yellow taxi and mini-truck with distinct roof/cabin/cargo details; existing level JSON fields remain unchanged.
+- [x] Added a more layered asphalt junction surface, reflective edge studs and subtle lane-guide markings using lightweight vector primitives.\n- [ ] Complete responsive visual review and consider a dedicated HUD layout pass.
 - [ ] Run lint, tests, level validation and production build; physical Android verification remains separate.
