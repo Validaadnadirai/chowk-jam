@@ -22,6 +22,6 @@
 
 ## Known limitations
 - Visuals and audio are generated placeholders, not final production assets.
-- The solver proves that vehicles can exit in a valid sequence while respecting signal phases; it does not yet optimise a full passenger-stream schedule or prove star-par values.
+- The solver proves that vehicles can exit in a valid sequence while respecting signal phases. The validator compares configured par values with the solver's minimum exit count; levels without a configured par are only checked for solvability. It does not yet optimise a full passenger-stream schedule.
 - The passenger stream is a simple deterministic loop, not a time-based simulation.
 - No APK/AAB has been built in this environment.
