@@ -83,3 +83,11 @@
 - [x] Gameplay now loads and persists the saved sound preference; music ambience respects the saved music preference.
 - [x] Haptic feedback now respects the saved vibration preference for blocked moves, successful exits and level results.
 - [ ] Verify touch accuracy and settings persistence on a physical Android device; not yet tested.
+
+
+## Batch 12 — District Identity & Vehicle Art Refinement (in progress)
+- [x] Added subtle, distinct visual identity bands for City Streets, Old City and Festival Road, with lightweight skyline, haveli/arch and festival bunting motifs behind the existing map route.
+- [x] Refined vehicle vector renderer with lower sill/fascia highlights, wheel hubs, mirrors and body highlights while preserving the renderer API, vehicle types, orientation handling and hitboxes.
+- [x] Added restrained bus livery striping and mini-truck cargo-frame details; auto canopy trim reinforces its three-wheeler identity.
+- [ ] Run CI (lint, tests, level validation and production build) on the Batch 12 head.
+- [ ] Review the map and vehicle visuals on a physical Android device and profile low-end performance; not yet tested.
