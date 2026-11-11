@@ -42,11 +42,11 @@ export class HomeScene extends Phaser.Scene {
     const completed=this.progress.completedLevels.length;
     this.add.text(42,284,completed+' LEVELS CLEARED',{fontSize:'8px',color:'#9db0bf'}).setDepth(3);
 
-    const play=this.add.text(width/2,458,'▶  '+t(this.progress.language,'play'),{fontSize:'19px',color:'#111923',backgroundColor:'#fbbf24',padding:{x:42,y:15},fontStyle:'bold'}).setOrigin(.5).setInteractive({useHandCursor:true});
+    const play=this.add.text(width/2,458,'▶  '+t(this.progress.language,'play'),{fontSize:'19px',color:'#111923',backgroundColor:'#fbbf24',padding:{x:42,y:15},fontStyle:'bold'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-150,-32,300,64),Phaser.Geom.Rectangle.Contains);
     play.on('pointerdown',()=>this.scene.start('LevelSelect'));
-    const tutorial=this.add.text(100,520,'HOW TO PLAY',{fontSize:'10px',color:'#f8fafc',backgroundColor:'#22394c',padding:{x:12,y:11}}).setOrigin(.5).setInteractive({useHandCursor:true});
+    const tutorial=this.add.text(100,520,'HOW TO PLAY',{fontSize:'10px',color:'#f8fafc',backgroundColor:'#22394c',padding:{x:12,y:11}}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-72,-26,144,52),Phaser.Geom.Rectangle.Contains);
     tutorial.on('pointerdown',()=>this.showTutorial());
-    const settings=this.add.text(260,520,'SETTINGS',{fontSize:'10px',color:'#f8fafc',backgroundColor:'#22394c',padding:{x:15,y:11}}).setOrigin(.5).setInteractive({useHandCursor:true});
+    const settings=this.add.text(260,520,'SETTINGS',{fontSize:'10px',color:'#f8fafc',backgroundColor:'#22394c',padding:{x:15,y:11}}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-72,-26,144,52),Phaser.Geom.Rectangle.Contains);
     settings.on('pointerdown',()=>this.showSettings());
     this.add.text(width/2,602,'MADE FOR THE STREETS OF INDIA',{fontSize:'8px',color:'#7890a4',letterSpacing:2}).setOrigin(.5);
     this.add.text(width/2,620,'A VALIDAAD GAME',{fontSize:'7px',color:'#506779',letterSpacing:2}).setOrigin(.5);
