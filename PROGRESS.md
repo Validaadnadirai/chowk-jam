@@ -91,3 +91,9 @@
 - [x] Added restrained bus livery striping and mini-truck cargo-frame details; auto canopy trim reinforces its three-wheeler identity.
 - [ ] Run CI (lint, tests, level validation and production build) on the Batch 12 head.
 - [ ] Review the map and vehicle visuals on a physical Android device and profile low-end performance; not yet tested.
+
+## Batch 12 — District Identity & Vehicle Visual Refinement (CI pending)
+- [x] Added distinct, lightweight City Streets, Old City and Festival Road landmark treatments to the world map (modern shopfronts, warm bazaar facades/awnings, festival pennants/lantern gateway).
+- [x] Refined existing vector vehicle art with body seams, bus divisions, cargo-bed detailing, front/rear light accents and alloy wheel hubs; renderer API, vehicle types, orientation, hitboxes and level data remain unchanged.
+- [ ] Verify the new map composition and vehicle readability on small Android screens; no physical-device QA is claimed.
+- [ ] GitHub CI for Batch 12 is pending; do not treat it as passed until the exact head reports success.
