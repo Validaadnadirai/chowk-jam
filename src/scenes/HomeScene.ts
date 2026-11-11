@@ -12,7 +12,7 @@ export class HomeScene extends Phaser.Scene {
   this.add.text(180,118,'CHOWK',{fontSize:'39px',color:'#f8fafc',fontStyle:'bold',fontFamily:'Arial'}).setOrigin(.5);
   this.add.text(180,160,'JAM',{fontSize:'39px',color:'#fbbf24',fontStyle:'bold',fontFamily:'Arial'}).setOrigin(.5);
   this.add.text(180,205,t(this.progress.language,'subtitle'),{fontSize:'12px',color:'#cbd5e1'}).setOrigin(.5);
-  const card=this.add.rectangle(180,285,290,72,0x203447).setStrokeStyle(1,0x456078);
+  this.add.rectangle(180,285,290,72,0x203447).setStrokeStyle(1,0x456078);
   this.add.text(180,266,'YOUR CITY IS WAITING',{fontSize:'10px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(.5);
   this.add.text(180,293,'LEVEL '+this.progress.unlockedLevel+'     •     '+t(this.progress.language,'coins')+': '+this.progress.coins,{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5);
   const play=this.add.text(180,385,'▶  '+t(this.progress.language,'play'),{fontSize:'20px',color:'#101923',backgroundColor:'#fbbf24',padding:{x:38,y:15},fontStyle:'bold'}).setOrigin(.5).setInteractive({useHandCursor:true});
