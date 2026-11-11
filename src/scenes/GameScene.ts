@@ -25,6 +25,8 @@ export class GameScene extends Phaser.Scene {
   private status!:Phaser.GameObjects.Text;
   private levelTitle!:Phaser.GameObjects.Text;
   private signalText!:Phaser.GameObjects.Text;
+  private signalLampA!:Phaser.GameObjects.Arc;
+  private signalLampB!:Phaser.GameObjects.Arc;
   private bayText!:Phaser.GameObjects.Text;
   private paused=false;
   private audioContext?:AudioContext;
@@ -41,6 +43,8 @@ export class GameScene extends Phaser.Scene {
     this.add.text(180,28,'CHOWK JAM',{fontSize:'24px',color:'#f8fafc',fontStyle:'bold'}).setOrigin(.5);
     this.levelTitle=this.add.text(180,65,'',{fontSize:'11px',color:'#fbbf24'}).setOrigin(.5);
     this.signalText=this.add.text(180,91,'SIGNAL: GREEN',{fontSize:'10px',color:'#86efac'}).setOrigin(.5);
+    this.signalLampA=this.add.circle(292,91,5,0x22c55e).setStrokeStyle(1,0xe2e8f0,.55);
+    this.signalLampB=this.add.circle(308,91,5,0x334155).setStrokeStyle(1,0xe2e8f0,.35);
     this.status=this.add.text(180,115,'',{fontSize:'11px',color:'#cbd5e1'}).setOrigin(.5);
     const sound=this.add.text(318,115,'SOUND ON',{fontSize:'9px',color:'#fbbf24'}).setOrigin(.5).setInteractive();
     sound.on('pointerdown',()=>{this.soundEnabled=!this.soundEnabled;sound.setText(this.soundEnabled?'SOUND ON':'SOUND OFF');if(this.soundEnabled)this.startAmbient();else if(this.musicGain&&this.audioContext)this.musicGain.gain.setTargetAtTime(0,this.audioContext.currentTime,.08);});
@@ -112,8 +116,13 @@ export class GameScene extends Phaser.Scene {
     const signal=this.state.signal,phase=signal?Math.floor(this.state.grid.moves/signal.flipEvery)%2:0;
     if(signal&&phase!==this.lastSignalPhase){this.tweens.add({targets:this.signalText,scale:1.15,duration:110,yoyo:true});this.playTone(360,65);}
     this.lastSignalPhase=phase;
-    this.signalText.setText(signal?'SIGNAL: '+(phase===0?'A OPEN • B CLOSED':'B OPEN • A CLOSED')+'  NEXT '+(phase===0?'B':'A'):'SIGNAL: NOT ACTIVE');
+    this.signalText.setText(signal?'SIGNAL: '+(phase===0?'A OPEN • B CLOSED':'B OPEN • A CLOSED'):'SIGNAL: NOT ACTIVE');
     this.signalText.setColor(this.state.result==='failed'?'#f87171':'#86efac');
+    this.signalLampA.setFillStyle(!signal?0x64748b:phase===0?0x22c55e:0x334155,1);
+    this.signalLampB.setFillStyle(!signal?0x64748b:phase===1?0x22c55e:0x334155,1);
+    if(signal&&phase!==this.lastSignalPhase){
+      for(const lamp of [this.signalLampA,this.signalLampB]){this.tweens.killTweensOf(lamp);lamp.setScale(1);this.tweens.add({targets:lamp,scale:1.45,alpha:.7,duration:130,yoyo:true,ease:'Sine.easeOut'});}
+    }
     if(this.state.result==='won')this.showResult(true);
     if(this.state.result==='failed')this.showResult(false);
   }
@@ -136,6 +145,11 @@ export class GameScene extends Phaser.Scene {
       group.add(this.add.circle(-13,-13,3,0xfbbf24));group.add(this.add.circle(13,-13,3,0xfbbf24));
     }
     this.boardLayer.add(group);
+    if(obstacle.kind==='bhains'){
+      this.tweens.add({targets:group,scaleY:1.035,duration:1050,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
+    }else if(obstacle.kind==='thela'){
+      this.tweens.add({targets:group,angle:1.2,duration:1800,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
+    }
   }
   private addBoosterButton(x:number,y:number,label:string,id:BoosterId,cost:number):void{
     const button=this.add.text(x,y,label,{fontSize:'9px',color:'#f8fafc',backgroundColor:'#263d50',padding:{x:6,y:6}}).setOrigin(.5).setInteractive();
