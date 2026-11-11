@@ -1,0 +1,1 @@
+{"id":10,"name":"Final Auto","width":6,"height":6,"par":1,"passengers":["#a78bfa"],"vehicles":[{"id":"auto-10","type":"auto","color":"#a78bfa","x":2,"y":2,"length":1,"orientation":"horizontal","facing":"right","seats":1}],"obstacles":[{"x":0,"y":0,"kind":"bhains"}]}
