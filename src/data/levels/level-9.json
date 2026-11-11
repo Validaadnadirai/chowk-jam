@@ -1,0 +1,1 @@
+{"id":9,"name":"Thela Crossing","width":6,"height":6,"par":1,"passengers":["#f97316"],"vehicles":[{"id":"auto-9","type":"auto","color":"#f97316","x":2,"y":2,"length":1,"orientation":"horizontal","facing":"right","seats":1}],"obstacles":[{"x":0,"y":0,"kind":"thela"}]}
