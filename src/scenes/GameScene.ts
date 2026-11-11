@@ -55,7 +55,7 @@ export class GameScene extends Phaser.Scene {
     const pause=this.add.text(180,620,'Ⅱ PAUSE',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5).setInteractive();
     pause.on('pointerdown',()=>{this.paused=!this.paused;this.status.setText(this.paused?'PAUSED — TAP PAUSE TO RESUME':levelStatus(this.state));});
     const home=this.add.text(278,620,'HOME',{fontSize:'12px',color:'#fbbf24'}).setOrigin(.5).setInteractive();
-    home.on('pointerdown',()=>{if(this.paused)return;this.cameras.main.fadeOut(180,8,18,28);this.cameras.once('camerafadeoutcomplete',()=>this.scene.start('Home'));});
+    home.on('pointerdown',()=>{if(this.paused)return;this.cameras.main.fadeOut(180,8,18,28);this.cameras.main.once('camerafadeoutcomplete',()=>this.scene.start('Home'));});
     this.addBoosterButton(48,600,'HINT','hint',30);
     this.addBoosterButton(136,600,'+ BAY','extra-slot',80);
     this.addBoosterButton(224,600,'SHUFFLE','shuffle',20);
@@ -185,7 +185,7 @@ export class GameScene extends Phaser.Scene {
     this.tweens.add({targets:panel,scale:1,alpha:1,duration:260,ease:'Back.Out'});
     this.tweens.add({targets:[text,action],alpha:1,duration:220,delay:100});
     this.tweens.add({targets:action,scale:1.04,duration:650,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
-    action.on('pointerdown',()=>{if(this.paused)return;this.cameras.main.fadeOut(180,8,18,28);this.cameras.once('camerafadeoutcomplete',()=>{if(won){const next=LEVELS.find(level=>level.id===this.state.grid.level.id+1);if(next)this.loadLevel(next);else this.loadLevel(LEVELS[0]);}else this.loadLevel(LEVELS.find(level=>level.id===this.state.grid.level.id)!);this.cameras.main.fadeIn(180,8,18,28);});});
+    action.on('pointerdown',()=>{if(this.paused)return;this.cameras.main.fadeOut(180,8,18,28);this.cameras.main.once('camerafadeoutcomplete',()=>{if(won){const next=LEVELS.find(level=>level.id===this.state.grid.level.id+1);if(next)this.loadLevel(next);else this.loadLevel(LEVELS[0]);}else this.loadLevel(LEVELS.find(level=>level.id===this.state.grid.level.id)!);this.cameras.main.fadeIn(180,8,18,28);});});
     this.boardLayer.add([panel,text,action]);
   }
 }
