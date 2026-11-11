@@ -65,10 +65,10 @@ export class GameScene extends Phaser.Scene {
     const bay=this.state.bay.map(item=>item.vehicle.type.toUpperCase()+' '+item.boarded+'/'+item.vehicle.seats).join('   ');
     this.bayText.setText(bay||'— EMPTY —');
     const colors=this.state.passengerStream.map((p,i)=>this.add.circle(48+i*22,535,6,Phaser.Display.Color.HexStringToColor(p.color).color));
-    colors.forEach(circle=>this.boardLayer.add(circle));
+    colors.forEach(circle=>{this.boardLayer.add(circle);this.tweens.add({targets:circle,x:circle.x-18,duration:900,repeat:-1,ease:'Linear'});});
     this.status.setText(levelStatus(this.state));
     const signal=this.state.signal;
-    this.signalText.setText(signal?'SIGNAL: '+(Math.floor(this.state.grid.moves/signal.flipEvery)%2===0?'A OPEN • B CLOSED':'B OPEN • A CLOSED')+'  NEXT '+(Math.floor((this.state.grid.moves+1)/signal.flipEvery)%2===0?'A':'B'):'SIGNAL: NOT ACTIVE');
+    this.signalText.setText(signal?'SIGNAL: '+(Math.floor(this.state.grid.moves/signal.flipEvery)%2===0?'A OPEN • B CLOSED':'B OPEN • A CLOSED')+'  NEXT '+(Math.floor(this.state.grid.moves/signal.flipEvery)%2===0?'B':'A'):'SIGNAL: NOT ACTIVE');
     this.signalText.setColor(this.state.result==='failed'?'#f87171':'#86efac');
     if(this.state.result==='won')this.showResult(true);
     if(this.state.result==='failed')this.showResult(false);
