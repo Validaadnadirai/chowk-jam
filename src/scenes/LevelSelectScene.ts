@@ -18,6 +18,7 @@ export class LevelSelectScene extends Phaser.Scene {
   private progress:PlayerProgress=loadProgress();
   constructor(){super('LevelSelect');}
   create():void{
+    this.progress=loadProgress();
     const {width}=this.scale;
     this.cameras.main.setBackgroundColor('#0b1420');
     const bg=this.add.graphics();
