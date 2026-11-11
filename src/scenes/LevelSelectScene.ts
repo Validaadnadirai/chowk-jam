@@ -36,7 +36,7 @@ export class LevelSelectScene extends Phaser.Scene {
     // Old City: warm haveli roofline, arch and minaret silhouette.
     districtArt.fillStyle(0xc18a57,.3);
     districtArt.fillRect(width-46,416,24,42); districtArt.fillTriangle(width-50,416,width-34,400,width-18,416);
-    districtArt.fillRect(width-17,392,5,66); districtArt.fillCircle(width-14.5,390,4,0xc18a57,.3);
+    districtArt.fillRect(width-17,392,5,66); districtArt.fillStyle(0xc18a57,.3); districtArt.fillCircle(width-14.5,390,4);
     districtArt.lineStyle(3,0xd7a66c,.45); districtArt.strokeCircle(width-34,438,8);
     // Festival Road: bunting and glowing festoon points.
     districtArt.lineStyle(1.5,0xf2a6bd,.48); districtArt.beginPath(); districtArt.moveTo(18,520); districtArt.lineTo(width-18,520); districtArt.strokePath();
