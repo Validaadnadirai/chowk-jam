@@ -9,15 +9,13 @@ export interface FullGameState {
   result: 'playing' | 'won' | 'failed'; failReason?: 'bay-deadlock' | 'move-limit';
 }
 export function createFullGame(level: LevelDefinition & { passengers?: string[]; bayCapacity?: number; signal?: SignalConfig; par?: number }): FullGameState {
-  const colors = level.passengers?.length ? level.passengers : level.vehicles.map(v=>v.color);
+  const colors = level.passengers?.length ? level.passengers : level.vehicles.flatMap(v=>Array.from({length:v.seats},()=>v.color));
   const passengerStream = colors.map((color,i)=>({id:'p'+i,color}));
   return {grid:{level,vehicles:structuredClone(level.vehicles),moves:0,exitedIds:[]},bay:[],passengerStream,streamIndex:0,bayCapacity:level.bayCapacity ?? 5,signal:level.signal,moveLimit:level.moveLimit,par:level.par ?? Math.max(1,level.vehicles.length),result:'playing'};
 }
 function streamHasColor(state: FullGameState, color: string): boolean { return state.passengerStream.some(p=>p.color===color); }
 function settleBay(state: FullGameState): FullGameState {
-  let bay=[...state.bay];
-  let index=state.streamIndex;
-  // A bounded full pass is enough: passengers with no matching waiting vehicle loop around.
+  let bay=[...state.bay];let index=state.streamIndex;
   for(let n=0;n<state.passengerStream.length && bay.length;n++){
     const passenger=state.passengerStream[index % state.passengerStream.length];
     const target=bay.findIndex(item=>item.vehicle.color===passenger.color && item.boarded<item.vehicle.seats);
@@ -29,8 +27,7 @@ function settleBay(state: FullGameState): FullGameState {
 export function attemptVehicleExit(state: FullGameState, vehicleId: string): FullGameState {
   if(state.result!=='playing') return state;
   const vehicle=state.grid.vehicles.find(v=>v.id===vehicleId);
-  if(!vehicle) return state;
-  if(state.bay.length>=state.bayCapacity) return state;
+  if(!vehicle || state.bay.length>=state.bayCapacity) return state;
   const closed=closedSignalCells(state.grid.level,state.grid.moves,state.signal);
   if(!canExit(state.grid,vehicleId,{closedCells:closed})) return state;
   const nextGrid=exitVehicle(state.grid,vehicleId,{closedCells:closed});
