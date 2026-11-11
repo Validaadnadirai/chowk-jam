@@ -45,6 +45,10 @@ export class GameScene extends Phaser.Scene {
     this.progress=loadProgress();
     this.soundEnabled=this.progress.sound;
     this.cameras.main.fadeIn(220,8,18,28);
+    // Compact HUD surfaces separate information zones without changing the board or rules.
+    this.add.rectangle(180,78,336,116,0x142638,.96).setStrokeStyle(1,0x3d596d,.9);
+    this.add.rectangle(180,486,336,126,0x142638,.94).setStrokeStyle(1,0x3d596d,.85);
+    this.add.rectangle(180,613,336,52,0x0b1520,.98).setStrokeStyle(1,0x3d596d,.85);
     this.add.text(180,28,'CHOWK JAM',{fontSize:'24px',color:'#f8fafc',fontStyle:'bold'}).setOrigin(.5);
     this.levelTitle=this.add.text(180,65,'',{fontSize:'11px',color:'#fbbf24'}).setOrigin(.5);
     this.signalText=this.add.text(180,91,'SIGNAL: GREEN',{fontSize:'10px',color:'#86efac'}).setOrigin(.5);
@@ -54,21 +58,21 @@ export class GameScene extends Phaser.Scene {
     const sound=this.add.text(318,115,this.soundEnabled?'SOUND ON':'SOUND OFF',{fontSize:'9px',color:'#fbbf24'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-28,-18,56,36),Phaser.Geom.Rectangle.Contains);
     sound.on('pointerdown',()=>{this.soundEnabled=!this.soundEnabled;this.progress.sound=this.soundEnabled;saveProgress(this.progress);sound.setText(this.soundEnabled?'SOUND ON':'SOUND OFF');if(this.soundEnabled){if(this.progress.music)this.startAmbient();}else if(this.musicGain&&this.audioContext)this.musicGain.gain.setTargetAtTime(0,this.audioContext.currentTime,.08);});
     this.boardLayer=this.add.container(0,0);
-    this.add.text(180,455,'WAITING BAY',{fontSize:'10px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(.5);
-    this.bayText=this.add.text(180,480,'',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5);
-    this.add.text(180,515,'PASSENGER STREAM',{fontSize:'9px',color:'#94a3b8'}).setOrigin(.5);
-    this.add.text(180,500,'COINS: '+this.progress.coins,{fontSize:'11px',color:'#fbbf24'}).setOrigin(.5);
-    this.add.text(180,550,'CHOOSE YOUR NEXT ROUTE FROM THE CITY MAP',{fontSize:'8px',color:'#94a3b8'}).setOrigin(.5);
-    const undo=this.add.text(85,620,'↶ UNDO',{fontSize:'12px',color:'#38bdf8'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-34,-22,68,44),Phaser.Geom.Rectangle.Contains);
+    this.add.text(180,450,'WAITING BAY',{fontSize:'10px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(.5);
+    this.bayText=this.add.text(180,475,'',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5);
+    this.add.text(180,526,'PASSENGER STREAM',{fontSize:'9px',color:'#94a3b8'}).setOrigin(.5);
+    this.add.text(306,450,'COINS: '+this.progress.coins,{fontSize:'11px',color:'#fbbf24'}).setOrigin(.5);
+    this.add.text(180,570,'CHOOSE YOUR NEXT ROUTE FROM THE CITY MAP',{fontSize:'8px',color:'#94a3b8'}).setOrigin(.5);
+    const undo=this.add.text(85,626,'↶ UNDO',{fontSize:'12px',color:'#38bdf8'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-35,-17,70,34),Phaser.Geom.Rectangle.Contains);
     undo.on('pointerdown',()=>{if(this.history.length){this.state=this.history.pop()!;this.refresh();this.playTone(420,70);}});
-    const pause=this.add.text(180,620,'Ⅱ PAUSE',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-40,-22,80,44),Phaser.Geom.Rectangle.Contains);
+    const pause=this.add.text(180,626,'Ⅱ PAUSE',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-40,-17,80,34),Phaser.Geom.Rectangle.Contains);
     pause.on('pointerdown',()=>{this.paused=!this.paused;this.status.setText(this.paused?'PAUSED — TAP PAUSE TO RESUME':levelStatus(this.state));});
-    const home=this.add.text(278,620,'HOME',{fontSize:'12px',color:'#fbbf24'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-34,-22,68,44),Phaser.Geom.Rectangle.Contains);
+    const home=this.add.text(278,626,'HOME',{fontSize:'12px',color:'#fbbf24'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-35,-17,70,34),Phaser.Geom.Rectangle.Contains);
     home.on('pointerdown',()=>{if(this.paused)return;this.cameras.main.fadeOut(180,8,18,28);this.cameras.main.once('camerafadeoutcomplete',()=>this.scene.start('Home'));});
-    this.addBoosterButton(48,600,'HINT','hint',30);
-    this.addBoosterButton(136,600,'+ BAY','extra-slot',80);
-    this.addBoosterButton(224,600,'SHUFFLE','shuffle',20);
-    this.addBoosterButton(312,600,'UNDO','undo',25);
+    this.addBoosterButton(48,588,'HINT','hint',30);
+    this.addBoosterButton(136,588,'+ BAY','extra-slot',80);
+    this.addBoosterButton(224,588,'SHUFFLE','shuffle',20);
+    this.addBoosterButton(312,588,'UNDO','undo',25);
     const requested=LEVELS.find(level=>level.id===data.levelId&&level.id<=this.progress.unlockedLevel);
     this.loadLevel(requested??LEVELS[Math.min(this.progress.unlockedLevel-1,LEVELS.length-1)]??LEVELS[0]);
   }
@@ -132,7 +136,7 @@ export class GameScene extends Phaser.Scene {
       this.bayText.setScale(.88).setAlpha(.65);
       this.tweens.add({targets:this.bayText,scale:1,alpha:1,duration:240,ease:'Back.Out'});
     }
-    const colors=this.state.passengerStream.map((p,i)=>this.add.circle(48+i*22,535,6,Phaser.Display.Color.HexStringToColor(p.color).color));
+    const colors=this.state.passengerStream.map((p,i)=>this.add.circle(48+i*22,550,6,Phaser.Display.Color.HexStringToColor(p.color).color));
     colors.forEach((circle,index)=>{this.boardLayer.add(circle);this.tweens.add({targets:circle,x:circle.x-18,duration:1100+index*70,repeat:-1,ease:'Linear'});this.tweens.add({targets:circle,scale:1.16,alpha:.8,duration:520+index*35,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});});
     this.status.setText(levelStatus(this.state));
     const signal=this.state.signal,phase=signal?Math.floor(this.state.grid.moves/signal.flipEvery)%2:0;
@@ -186,7 +190,7 @@ export class GameScene extends Phaser.Scene {
     this.tweens.add({targets:this.status,scale:1.08,duration:100,yoyo:true});
   }
   private addBoosterButton(x:number,y:number,label:string,id:BoosterId,cost:number):void{
-    const button=this.add.text(x,y,label,{fontSize:'9px',color:'#f8fafc',backgroundColor:'#263d50',padding:{x:6,y:6}}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-38,-22,76,44),Phaser.Geom.Rectangle.Contains);
+    const button=this.add.text(x,y,label,{fontSize:'9px',color:'#f8fafc',backgroundColor:'#263d50',padding:{x:6,y:6}}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-36,-17,72,34),Phaser.Geom.Rectangle.Contains);
     button.on('pointerdown',()=>{if(this.paused||this.state.result!=='playing')return;let next=this.progress;if(next.inventory[id]===0){const purchased=buyBooster(next,id,1);if(!purchased){this.status.setText('NOT ENOUGH COINS');return;}next=purchased;}const result=activateBooster(this.state,next,id,cost);if(!result){this.status.setText('NOT ENOUGH COINS');return;}this.progress=result.progress;this.state=result.state;saveProgress(this.progress);if(id==='undo'&&this.history.length)this.state=this.history.pop()!;this.showBoosterFeedback(id==='hint'?'ROUTE HINT':id==='extra-slot'?'WAITING BAY +1':id==='shuffle'?'PASSENGERS SHUFFLED':'MOVE UNDONE');this.playTone(id==='hint'?660:id==='extra-slot'?740:id==='shuffle'?520:440,95);if(result.hintVehicleId){const v=this.state.grid.vehicles.find(item=>item.id===result.hintVehicleId);if(v){const ring=this.add.circle(LEFT+v.x*CELL+CELL/2,TOP+v.y*CELL+CELL/2,22).setStrokeStyle(3,0xfbbf24);this.tweens.add({targets:ring,alpha:0,scale:1.8,duration:650,onComplete:()=>ring.destroy()});}}this.refresh();});
   }
   private emitExitSparks(x:number,y:number,color:number):void{
