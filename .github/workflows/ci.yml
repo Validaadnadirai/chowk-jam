@@ -3,7 +3,7 @@ on:
   push:
     branches: [main, 'batch-*']
   pull_request:
-    branches: [main]
+    branches: [main, 'batch-*']
 jobs:
   quality:
     runs-on: ubuntu-latest
@@ -12,7 +12,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
       - run: npm install
       - run: npm run lint
       - run: npm test
+      - run: npm run validate:levels
       - run: npm run build
