@@ -40,6 +40,8 @@ export class GameScene extends Phaser.Scene {
   constructor(){super('Game');}
   create(data:{levelId?:number}={}):void{
     this.cameras.main.setBackgroundColor('#101923');
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN,()=>this.cleanupAudio());
+    this.events.once(Phaser.Scenes.Events.DESTROY,()=>this.cleanupAudio());
     this.cameras.main.fadeIn(220,8,18,28);
     this.add.text(180,28,'CHOWK JAM',{fontSize:'24px',color:'#f8fafc',fontStyle:'bold'}).setOrigin(.5);
     this.levelTitle=this.add.text(180,65,'',{fontSize:'11px',color:'#fbbf24'}).setOrigin(.5);
@@ -72,6 +74,9 @@ export class GameScene extends Phaser.Scene {
     this.state=createFullGame(level);this.history=[];this.paused=false;this.resultShown=false;this.lastSignalPhase=0;this.levelTitle.setText('LEVEL '+level.id+' • '+level.name.toUpperCase());this.refresh();
   }
   private refresh():void{
+    // Kill tweens before destroying old board objects; repeated refreshes must not
+    // leave animation work running against discarded objects on low-memory phones.
+    this.boardLayer.list.forEach((object)=>this.tweens.killTweensOf(object));
     this.boardLayer.removeAll(true);
     const boardW=this.state.grid.level.width*CELL,boardH=this.state.grid.level.height*CELL;
     this.boardLayer.add(this.add.rectangle(LEFT+boardW/2,TOP+boardH/2,boardW+24,boardH+24,0x0a1118).setStrokeStyle(3,0x64798a));
@@ -112,7 +117,7 @@ export class GameScene extends Phaser.Scene {
       this.tweens.add({targets:this.bayText,scale:1,alpha:1,duration:240,ease:'Back.Out'});
     }
     const colors=this.state.passengerStream.map((p,i)=>this.add.circle(48+i*22,535,6,Phaser.Display.Color.HexStringToColor(p.color).color));
-    colors.forEach((circle,index)=>{this.boardLayer.add(circle);this.tweens.add({targets:circle,x:circle.x-18,duration:900+index*70,repeat:-1,ease:'Linear'});this.tweens.add({targets:circle,scale:1.22,alpha:.72,duration:420+index*35,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});});
+    colors.forEach((circle,index)=>{this.boardLayer.add(circle);this.tweens.add({targets:circle,x:circle.x-18,duration:1100+index*70,repeat:-1,ease:'Linear'});this.tweens.add({targets:circle,scale:1.16,alpha:.8,duration:520+index*35,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});});
     this.status.setText(levelStatus(this.state));
     const signal=this.state.signal,phase=signal?Math.floor(this.state.grid.moves/signal.flipEvery)%2:0;
     if(signal&&phase!==this.lastSignalPhase){this.tweens.add({targets:this.signalText,scale:1.15,duration:110,yoyo:true});for(const lamp of [this.signalLampA,this.signalLampB]){this.tweens.killTweensOf(lamp);lamp.setScale(1);this.tweens.add({targets:lamp,scale:1.4,alpha:.72,duration:130,yoyo:true,ease:'Sine.easeOut'});}this.playTone(360,65);}
@@ -156,7 +161,7 @@ export class GameScene extends Phaser.Scene {
   }
   private addBoosterButton(x:number,y:number,label:string,id:BoosterId,cost:number):void{
     const button=this.add.text(x,y,label,{fontSize:'9px',color:'#f8fafc',backgroundColor:'#263d50',padding:{x:6,y:6}}).setOrigin(.5).setInteractive();
-    button.on('pointerdown',()=>{if(this.paused||this.state.result!=='playing')return;let next=this.progress;if(next.inventory[id]===0){const purchased=buyBooster(next,id,1);if(!purchased){this.status.setText('NOT ENOUGH COINS');return;}next=purchased;}const result=activateBooster(this.state,next,id,cost);if(!result){this.status.setText('NOT ENOUGH COINS');return;}this.progress=result.progress;this.state=result.state;saveProgress(this.progress);if(id==='undo'&&this.history.length)this.state=this.history.pop()!;this.showBoosterFeedback(id==='hint'?'ROUTE HINT':id==='extra-slot'?'WAITING BAY +1':id==='shuffle'?'PASSENGERS SHUFFLED':'MOVE UNDONE');if(result.hintVehicleId){const v=this.state.grid.vehicles.find(item=>item.id===result.hintVehicleId);if(v){const ring=this.add.circle(LEFT+v.x*CELL+CELL/2,TOP+v.y*CELL+CELL/2,22).setStrokeStyle(3,0xfbbf24);this.tweens.add({targets:ring,alpha:0,scale:1.8,duration:650,onComplete:()=>ring.destroy()});}}this.refresh();});
+    button.on('pointerdown',()=>{if(this.paused||this.state.result!=='playing')return;let next=this.progress;if(next.inventory[id]===0){const purchased=buyBooster(next,id,1);if(!purchased){this.status.setText('NOT ENOUGH COINS');return;}next=purchased;}const result=activateBooster(this.state,next,id,cost);if(!result){this.status.setText('NOT ENOUGH COINS');return;}this.progress=result.progress;this.state=result.state;saveProgress(this.progress);if(id==='undo'&&this.history.length)this.state=this.history.pop()!;this.showBoosterFeedback(id==='hint'?'ROUTE HINT':id==='extra-slot'?'WAITING BAY +1':id==='shuffle'?'PASSENGERS SHUFFLED':'MOVE UNDONE');this.playTone(id==='hint'?660:id==='extra-slot'?740:id==='shuffle'?520:440,95);if(result.hintVehicleId){const v=this.state.grid.vehicles.find(item=>item.id===result.hintVehicleId);if(v){const ring=this.add.circle(LEFT+v.x*CELL+CELL/2,TOP+v.y*CELL+CELL/2,22).setStrokeStyle(3,0xfbbf24);this.tweens.add({targets:ring,alpha:0,scale:1.8,duration:650,onComplete:()=>ring.destroy()});}}this.refresh();});
   }
   private emitExitSparks(x:number,y:number,color:number):void{
     for(let i=0;i<7;i++){
@@ -176,11 +181,17 @@ export class GameScene extends Phaser.Scene {
       if(this.paused||this.state.result!=='playing')return;
       idleTween.pause();
       const next=attemptVehicleExit(this.state,vehicle.id);
-      if(next===this.state){this.tweens.add({targets:group,x:px+5,duration:45,yoyo:true,repeat:2,onComplete:()=>idleTween.resume()});this.playTone(130,90);if('vibrate' in navigator)navigator.vibrate?.(35);return;}
+      if(next===this.state){this.tweens.add({targets:group,x:px+5,duration:45,yoyo:true,repeat:2,onComplete:()=>idleTween.resume()});this.playTone(145,85);if('vibrate' in navigator)navigator.vibrate?.(35);return;}
       this.history.push(structuredClone(this.state));
       this.tweens.add({targets:group,alpha:0,scaleX:.75,scaleY:.75,duration:180,onComplete:()=>{this.emitExitSparks(px,py,Phaser.Display.Color.HexStringToColor(vehicle.color).color);this.state=next;this.playTone(520,80);if('vibrate' in navigator)navigator.vibrate?.(18);this.refresh();}});
     });
     this.boardLayer.add(group);
+  }
+  private cleanupAudio():void{
+    try{this.musicGain?.gain.setTargetAtTime(0,this.audioContext?.currentTime??0,.025);this.musicOscillator?.stop();}catch{/* Audio may already be stopped. */}
+    this.musicOscillator=undefined;this.musicGain=undefined;
+    const context=this.audioContext;this.audioContext=undefined;
+    if(context&&context.state!=='closed')void context.close().catch(()=>undefined);
   }
   private startAmbient():void{
     if(!this.soundEnabled)return;
@@ -194,7 +205,7 @@ export class GameScene extends Phaser.Scene {
   }
   private playTone(frequency:number,duration:number):void{
     if(!this.soundEnabled)return;
-    try{this.audioContext??=new AudioContext();this.startAmbient();const oscillator=this.audioContext.createOscillator();const gain=this.audioContext.createGain();oscillator.frequency.value=frequency;gain.gain.setValueAtTime(.035,this.audioContext.currentTime);gain.gain.exponentialRampToValueAtTime(.001,this.audioContext.currentTime+duration/1000);oscillator.connect(gain);gain.connect(this.audioContext.destination);oscillator.start();oscillator.stop(this.audioContext.currentTime+duration/1000);}catch{/* Audio is optional; gameplay remains available without it. */}
+    try{this.audioContext??=new AudioContext();if(this.audioContext.state==='suspended')void this.audioContext.resume().catch(()=>undefined);this.startAmbient();const oscillator=this.audioContext.createOscillator();const gain=this.audioContext.createGain();oscillator.frequency.value=frequency;gain.gain.setValueAtTime(.035,this.audioContext.currentTime);gain.gain.exponentialRampToValueAtTime(.001,this.audioContext.currentTime+duration/1000);oscillator.connect(gain);gain.connect(this.audioContext.destination);oscillator.start();oscillator.stop(this.audioContext.currentTime+duration/1000);}catch{/* Audio is optional; gameplay remains available without it. */}
   }
   private showResult(won:boolean):void{
     if(this.resultShown)return;
@@ -202,7 +213,7 @@ export class GameScene extends Phaser.Scene {
     const title=won?'CHOWK CLEAR!':'TRY AGAIN';
     this.playTone(won?880:165,won?260:220);
     if('vibrate' in navigator)navigator.vibrate?.(won?[45,35,90]:[90,45,90]);
-    if(won)for(let i=0;i<28;i++){const bit=this.add.rectangle(Phaser.Math.Between(42,318),Phaser.Math.Between(180,250),Phaser.Math.Between(3,6),Phaser.Math.Between(5,10),Phaser.Display.Color.GetColor(Phaser.Math.Between(80,255),Phaser.Math.Between(80,255),Phaser.Math.Between(80,255)));this.tweens.add({targets:bit,y:Phaser.Math.Between(340,420),x:bit.x+Phaser.Math.Between(-45,45),angle:Phaser.Math.Between(-180,180),alpha:0,duration:Phaser.Math.Between(650,1050),onComplete:()=>bit.destroy()});}
+    if(won)for(let i=0;i<18;i++){const bit=this.add.rectangle(Phaser.Math.Between(42,318),Phaser.Math.Between(180,250),Phaser.Math.Between(3,6),Phaser.Math.Between(5,10),Phaser.Display.Color.GetColor(Phaser.Math.Between(80,255),Phaser.Math.Between(80,255),Phaser.Math.Between(80,255)));this.tweens.add({targets:bit,y:Phaser.Math.Between(340,420),x:bit.x+Phaser.Math.Between(-45,45),angle:Phaser.Math.Between(-180,180),alpha:0,duration:Phaser.Math.Between(650,1050),onComplete:()=>bit.destroy()});}
     if(won){this.progress=awardLevel(this.progress,this.state.grid.level.id,starsForMoves(this.state.grid.moves,this.state.par));saveProgress(this.progress);}
     const stars=won?'★'.repeat(starsForMoves(this.state.grid.moves,this.state.par)):'';
     const panel=this.add.rectangle(180,300,270,120,0x0b1220,.96).setStrokeStyle(2,won?0xfbbf24:0xf87171).setScale(.86).setAlpha(0);
