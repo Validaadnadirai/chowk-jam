@@ -10,6 +10,7 @@ import level8 from '../data/levels/level-8.json';
 import level9 from '../data/levels/level-9.json';
 import level10 from '../data/levels/level-10.json';
 import { createFullGame, attemptVehicleExit, levelStatus, starsForMoves, type FullGameState } from '../core/gameplay';
+import type { Obstacle } from '../core/types';
 import { parseLevel } from '../core/levelLoader';
 import type { LevelDefinition, Vehicle } from '../core/types';
 import {loadProgress,saveProgress,awardLevel,buyBooster,type PlayerProgress,type BoosterId} from '../core/progression';
@@ -90,7 +91,7 @@ export class GameScene extends Phaser.Scene {
     if(this.state.result==='won')this.showResult(true);
     if(this.state.result==='failed')this.showResult(false);
   }
-  private drawObstacle(obstacle:import('../core/types').Obstacle):void{
+  private drawObstacle(obstacle:Obstacle):void{
     const cx=LEFT+obstacle.x*CELL+CELL/2,cy=TOP+obstacle.y*CELL+CELL/2;
     const group=this.add.container(cx,cy);
     group.add(this.add.ellipse(0,15,38,9,0x080e14,.5));
