@@ -12,6 +12,8 @@ import level10 from '../data/levels/level-10.json';
 import { createFullGame, attemptVehicleExit, levelStatus, starsForMoves, type FullGameState } from '../core/gameplay';
 import { parseLevel } from '../core/levelLoader';
 import type { LevelDefinition, Vehicle } from '../core/types';
+import {loadProgress,saveProgress,awardLevel,buyBooster,type PlayerProgress,type BoosterId} from '../core/progression';
+import {activateBooster} from '../core/boosters';
 const LEVELS:LevelDefinition[]=[level1,level2,level3,level4,level5,level6,level7,level8,level9,level10].map(parseLevel);
 const CELL=48,LEFT=36,TOP=154;
 export class GameScene extends Phaser.Scene {
@@ -28,6 +30,7 @@ export class GameScene extends Phaser.Scene {
   private musicGain?:GainNode;
   private soundEnabled=true;
   private lastSignalPhase=0;
+  private progress:PlayerProgress=loadProgress();
   constructor(){super('Game');}
   create():void{
     this.cameras.main.setBackgroundColor('#101923');
@@ -41,6 +44,7 @@ export class GameScene extends Phaser.Scene {
     this.add.text(180,455,'WAITING BAY',{fontSize:'10px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(.5);
     this.bayText=this.add.text(180,480,'',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5);
     this.add.text(180,515,'PASSENGER STREAM',{fontSize:'9px',color:'#94a3b8'}).setOrigin(.5);
+    this.add.text(180,500,'COINS: '+this.progress.coins,{fontSize:'11px',color:'#fbbf24'}).setOrigin(.5);
     this.add.text(180,550,'SELECT LEVEL',{fontSize:'9px',color:'#94a3b8'}).setOrigin(.5);
     LEVELS.forEach((level,index)=>{
       const x=22+index*35;
@@ -53,6 +57,10 @@ export class GameScene extends Phaser.Scene {
     pause.on('pointerdown',()=>{this.paused=!this.paused;this.status.setText(this.paused?'PAUSED — TAP PAUSE TO RESUME':levelStatus(this.state));});
     const home=this.add.text(278,620,'HOME',{fontSize:'12px',color:'#fbbf24'}).setOrigin(.5).setInteractive();
     home.on('pointerdown',()=>this.scene.start('Home'));
+    this.addBoosterButton(48,600,'HINT','hint',30);
+    this.addBoosterButton(136,600,'+ BAY','extra-slot',80);
+    this.addBoosterButton(224,600,'SHUFFLE','shuffle',20);
+    this.addBoosterButton(312,600,'UNDO','undo',25);
     this.loadLevel(LEVELS[0]);
   }
   private loadLevel(level:LevelDefinition):void{
@@ -81,6 +89,10 @@ export class GameScene extends Phaser.Scene {
     this.signalText.setColor(this.state.result==='failed'?'#f87171':'#86efac');
     if(this.state.result==='won')this.showResult(true);
     if(this.state.result==='failed')this.showResult(false);
+  }
+  private addBoosterButton(x:number,y:number,label:string,id:BoosterId,cost:number):void{
+    const button=this.add.text(x,y,label,{fontSize:'9px',color:'#f8fafc',backgroundColor:'#263d50',padding:{x:6,y:6}}).setOrigin(.5).setInteractive();
+    button.on('pointerdown',()=>{if(this.paused||this.state.result!=='playing')return;let next=this.progress;if(next.inventory[id]===0){const purchased=buyBooster(next,id,1);if(!purchased){this.status.setText('NOT ENOUGH COINS');return;}next=purchased;}const result=activateBooster(this.state,next,id,cost);if(!result){this.status.setText('NOT ENOUGH COINS');return;}this.progress=result.progress;this.state=result.state;saveProgress(this.progress);if(id==='undo'&&this.history.length)this.state=this.history.pop()!;if(result.hintVehicleId){const v=this.state.grid.vehicles.find(item=>item.id===result.hintVehicleId);if(v){const ring=this.add.circle(LEFT+v.x*CELL+CELL/2,TOP+v.y*CELL+CELL/2,22).setStrokeStyle(3,0xfbbf24);this.tweens.add({targets:ring,alpha:0,scale:1.8,duration:650,onComplete:()=>ring.destroy()});}}this.refresh();});
   }
   private drawVehicle(vehicle:Vehicle):void{
     const w=vehicle.orientation==='horizontal'?vehicle.length*CELL-5:CELL-5;
@@ -118,9 +130,10 @@ export class GameScene extends Phaser.Scene {
     this.playTone(won?880:165,won?260:220);
     if('vibrate' in navigator)navigator.vibrate?.(won?[45,35,90]:[90,45,90]);
     if(won)for(let i=0;i<28;i++){const bit=this.add.rectangle(Phaser.Math.Between(42,318),Phaser.Math.Between(180,250),Phaser.Math.Between(3,6),Phaser.Math.Between(5,10),Phaser.Display.Color.GetColor(Phaser.Math.Between(80,255),Phaser.Math.Between(80,255),Phaser.Math.Between(80,255)));this.tweens.add({targets:bit,y:Phaser.Math.Between(340,420),x:bit.x+Phaser.Math.Between(-45,45),angle:Phaser.Math.Between(-180,180),alpha:0,duration:Phaser.Math.Between(650,1050),onComplete:()=>bit.destroy()});}
+    if(won){this.progress=awardLevel(this.progress,this.state.grid.level.id,starsForMoves(this.state.grid.moves,this.state.par));saveProgress(this.progress);}
     const stars=won?'★'.repeat(starsForMoves(this.state.grid.moves,this.state.par)):'';
     const panel=this.add.rectangle(180,300,270,120,0x0b1220,.96).setStrokeStyle(2,won?0xfbbf24:0xf87171);
-    const text=this.add.text(180,278,title+'\n'+stars+'\n'+(won?'MOVES: '+this.state.grid.moves:'REASON: '+this.state.failReason),{fontSize:'18px',color:'#f8fafc',align:'center',lineSpacing:8}).setOrigin(.5);
+    const text=this.add.text(180,278,title+'\\n'+stars+'\\n'+(won?'MOVES: '+this.state.grid.moves:'REASON: '+this.state.failReason),{fontSize:'18px',color:'#f8fafc',align:'center',lineSpacing:8}).setOrigin(.5);
     const action=this.add.text(180,340,won?'NEXT LEVEL':'RETRY',{fontSize:'12px',color:'#101923',backgroundColor:'#fbbf24',padding:{x:14,y:8}}).setOrigin(.5).setInteractive();
     action.on('pointerdown',()=>{if(won){const next=LEVELS.find(level=>level.id===this.state.grid.level.id+1);if(next)this.loadLevel(next);else this.loadLevel(LEVELS[0]);}else this.loadLevel(LEVELS.find(level=>level.id===this.state.grid.level.id)!);});
     this.boardLayer.add([panel,text,action]);
