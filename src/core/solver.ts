@@ -4,7 +4,7 @@ import { closedSignalCells, type SignalConfig } from './signals';
 export interface SolverResult { solvable:boolean; moves:number|null; explored:number }
 export function solveLevel(level: LevelDefinition & { signal?: SignalConfig }, maxStates=100000): SolverResult {
   const start=createGameState(level);
-  const queue:Array<{ids:string[];moves:number;path:number}>= [{ids:start.vehicles.map(v=>v.id),moves:0,path:0}];
+  const queue:Array<{ids:string[];moves:number}>= [{ids:start.vehicles.map(v=>v.id),moves:0}];
   const seen=new Set<string>();
   let explored=0;
   while(queue.length && explored<maxStates){
@@ -15,7 +15,7 @@ export function solveLevel(level: LevelDefinition & { signal?: SignalConfig }, m
     const closed=closedSignalCells(level,node.moves,level.signal);
     for(const vehicle of state.vehicles){
       const next=exitVehicle(state,vehicle.id,{closedCells:closed});
-      if(next!==state)queue.push({ids:next.vehicles.map(v=>v.id),moves:next.moves,path:node.path+1});
+      if(next!==state)queue.push({ids:next.vehicles.map(v=>v.id),moves:next.moves});
     }
   }
   return {solvable:false,moves:null,explored};
