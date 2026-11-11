@@ -95,7 +95,33 @@ export function createVehicleArt(scene: Phaser.Scene, vehicle: Vehicle, width: n
     details.fillStyle(0x17232d,1); details.fillRect(-length*.22,depth*.12,length*.44,depth*.07);
     for(let i=0;i<5;i++){details.fillStyle(i%2===0?0xf8fafc:0x17232d,1);details.fillRect(-length*.21+i*length*.085,depth*.12,length*.085,depth*.07);}
   }
+  // Fine trim: door seams, side windows and reflective wheel hubs add definition
+  // while remaining vector-only (no texture downloads or per-frame allocations).
+  details.lineStyle(1,0x10202b,.55);
+  if(vehicle.type==='bus'){
+    for(let i=0;i<4;i++) details.lineBetween(-length*.35+i*length*.19,depth*.02,-length*.35+i*length*.19,depth*.2);
+    details.lineStyle(1,0xf8fafc,.28);details.lineBetween(-length*.39,-depth*.31,length*.39,-depth*.31);
+  }else if(vehicle.type==='mini-truck'){
+    details.lineBetween(-length*.05,-depth*.34,-length*.05,depth*.27);
+    details.lineStyle(1,0xf4d4a5,.75);details.lineBetween(length*.1,depth*.08,length*.38,depth*.08);
+  }else{
+    details.lineBetween(-length*.02,-depth*.34,-length*.02,depth*.27);
+    details.lineStyle(1,0xffffff,.32);details.lineBetween(-length*.34,depth*.12,-length*.08,depth*.12);
+  }
+  details.fillStyle(0xfff6d6,.95);
+  details.fillCircle(length*.43,-depth*.17,Math.max(1.2,depth*.035));
+  details.fillStyle(0xff6b5e,.95);
+  details.fillCircle(-length*.43,-depth*.17,Math.max(1.2,depth*.035));
   group.add(details);
+  // Two compact alloy hubs reinforce the vehicle's side profile.
+  const hubs=scene.add.graphics();
+  hubs.fillStyle(0x0b1118,1);
+  hubs.fillCircle(-length*.275,depth*.35,Math.max(2,depth*.09));
+  hubs.fillCircle(length*.335,depth*.35,Math.max(2,depth*.09));
+  hubs.fillStyle(0xb7c5cc,1);
+  hubs.fillCircle(-length*.275,depth*.35,Math.max(1,depth*.038));
+  hubs.fillCircle(length*.335,depth*.35,Math.max(1,depth*.038));
+  group.add(hubs);
   if(vehicle.type==='auto'){
     // The auto's exposed front wheel and canopy trim distinguish its three-wheeler silhouette.
     group.add(scene.add.circle(-length*.38,depth*.39,Math.max(2,depth*.1),0x111820));
