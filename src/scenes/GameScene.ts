@@ -114,15 +114,12 @@ export class GameScene extends Phaser.Scene {
     colors.forEach((circle,index)=>{this.boardLayer.add(circle);this.tweens.add({targets:circle,x:circle.x-18,duration:900+index*70,repeat:-1,ease:'Linear'});this.tweens.add({targets:circle,scale:1.22,alpha:.72,duration:420+index*35,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});});
     this.status.setText(levelStatus(this.state));
     const signal=this.state.signal,phase=signal?Math.floor(this.state.grid.moves/signal.flipEvery)%2:0;
-    if(signal&&phase!==this.lastSignalPhase){this.tweens.add({targets:this.signalText,scale:1.15,duration:110,yoyo:true});this.playTone(360,65);}
+    if(signal&&phase!==this.lastSignalPhase){this.tweens.add({targets:this.signalText,scale:1.15,duration:110,yoyo:true});for(const lamp of [this.signalLampA,this.signalLampB]){this.tweens.killTweensOf(lamp);lamp.setScale(1);this.tweens.add({targets:lamp,scale:1.4,alpha:.72,duration:130,yoyo:true,ease:'Sine.easeOut'});}this.playTone(360,65);}
     this.lastSignalPhase=phase;
     this.signalText.setText(signal?'SIGNAL: '+(phase===0?'A OPEN • B CLOSED':'B OPEN • A CLOSED'):'SIGNAL: NOT ACTIVE');
     this.signalText.setColor(this.state.result==='failed'?'#f87171':'#86efac');
     this.signalLampA.setFillStyle(!signal?0x64748b:phase===0?0x22c55e:0x334155,1);
     this.signalLampB.setFillStyle(!signal?0x64748b:phase===1?0x22c55e:0x334155,1);
-    if(signal&&phase!==this.lastSignalPhase){
-      for(const lamp of [this.signalLampA,this.signalLampB]){this.tweens.killTweensOf(lamp);lamp.setScale(1);this.tweens.add({targets:lamp,scale:1.45,alpha:.7,duration:130,yoyo:true,ease:'Sine.easeOut'});}
-    }
     if(this.state.result==='won')this.showResult(true);
     if(this.state.result==='failed')this.showResult(false);
   }
