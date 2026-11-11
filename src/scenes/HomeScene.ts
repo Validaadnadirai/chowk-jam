@@ -43,7 +43,7 @@ export class HomeScene extends Phaser.Scene {
     this.add.text(42,284,completed+' LEVELS CLEARED',{fontSize:'8px',color:'#9db0bf'}).setDepth(3);
 
     const play=this.add.text(width/2,458,'▶  '+t(this.progress.language,'play'),{fontSize:'19px',color:'#111923',backgroundColor:'#fbbf24',padding:{x:42,y:15},fontStyle:'bold'}).setOrigin(.5).setInteractive({useHandCursor:true});
-    play.on('pointerdown',()=>this.scene.start('Game'));
+    play.on('pointerdown',()=>this.scene.start('LevelSelect'));
     const tutorial=this.add.text(100,520,'HOW TO PLAY',{fontSize:'10px',color:'#f8fafc',backgroundColor:'#22394c',padding:{x:12,y:11}}).setOrigin(.5).setInteractive({useHandCursor:true});
     tutorial.on('pointerdown',()=>this.showTutorial());
     const settings=this.add.text(260,520,'SETTINGS',{fontSize:'10px',color:'#f8fafc',backgroundColor:'#22394c',padding:{x:15,y:11}}).setOrigin(.5).setInteractive({useHandCursor:true});
