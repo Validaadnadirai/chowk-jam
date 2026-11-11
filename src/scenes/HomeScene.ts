@@ -41,6 +41,10 @@ export class HomeScene extends Phaser.Scene {
     this.add.text(314,262,'◈ '+this.progress.coins,{fontSize:'13px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(1,.5).setDepth(3);
     const completed=this.progress.completedLevels.length;
     this.add.text(42,284,completed+' LEVELS CLEARED',{fontSize:'8px',color:'#9db0bf'}).setDepth(3);
+    const progressTrack=this.add.rectangle(width/2,307,276,5,0x30495b,.95).setDepth(3);
+    const progressFill=this.add.rectangle(42,307,276*Math.min(1,completed/10),5,0xfbbf24,1).setOrigin(0,.5).setDepth(4);
+    progressTrack.setStrokeStyle(1,0x466177,.8);
+    this.add.text(width-42,284,completed+'/10',{fontSize:'8px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(1,0).setDepth(3);
 
     const play=this.add.text(width/2,458,'▶  '+t(this.progress.language,'play'),{fontSize:'19px',color:'#111923',backgroundColor:'#fbbf24',padding:{x:42,y:15},fontStyle:'bold'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-150,-32,300,64),Phaser.Geom.Rectangle.Contains);
     play.on('pointerdown',()=>this.scene.start('LevelSelect'));
@@ -53,7 +57,7 @@ export class HomeScene extends Phaser.Scene {
   }
 
   private showTutorial():void{
-    const panel=this.add.rectangle(180,330,320,360,0x0b1520,.98).setStrokeStyle(2,0xfbbf24);
+    const panel=this.add.rectangle(180,330,320,360,0x0b1520,.98).setStrokeStyle(2,0xfbbf24).setDepth(20);
     const heading=this.add.text(180,185,'HOW TO PLAY',{fontSize:'20px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(.5);
     const copy=this.add.text(180,310,'1. Tap a vehicle to send it out.\n\n2. Make sure its exit lane is clear.\n\n3. Match passengers with vehicle colours.\n\n4. Watch the signal lanes.\n\n5. Clear every vehicle to win!',{fontSize:'13px',color:'#f8fafc',align:'left',lineSpacing:7,wordWrap:{width:270}}).setOrigin(.5);
     const close=this.add.text(180,470,'GOT IT',{fontSize:'13px',color:'#101923',backgroundColor:'#fbbf24',padding:{x:22,y:9}}).setOrigin(.5).setInteractive();
