@@ -1,6 +1,6 @@
 export type Direction = 'up' | 'down' | 'left' | 'right';
 export type Orientation = 'horizontal' | 'vertical';
-export type VehicleType = 'auto' | 'erickshaw' | 'tempo' | 'bus';
+export type VehicleType = 'auto' | 'erickshaw' | 'tempo' | 'bus' | 'hatchback' | 'taxi' | 'mini-truck';
 export interface Cell { x: number; y: number }
 export interface Vehicle { id: string; type: VehicleType; color: string; x: number; y: number; length: number; orientation: Orientation; facing: Direction; seats: number }
 export interface Obstacle extends Cell { kind: 'thela' | 'bhains' | 'barrier' }
