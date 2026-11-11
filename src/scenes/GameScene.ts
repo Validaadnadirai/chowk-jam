@@ -71,11 +71,31 @@ export class GameScene extends Phaser.Scene {
   private refresh():void{
     this.boardLayer.removeAll(true);
     const boardW=this.state.grid.level.width*CELL,boardH=this.state.grid.level.height*CELL;
-    this.boardLayer.add(this.add.rectangle(LEFT+boardW/2,TOP+boardH/2,boardW+18,boardH+18,0x111c27).setStrokeStyle(2,0x526579));
+    this.boardLayer.add(this.add.rectangle(LEFT+boardW/2,TOP+boardH/2,boardW+24,boardH+24,0x0a1118).setStrokeStyle(3,0x64798a));
+    this.boardLayer.add(this.add.rectangle(LEFT+boardW/2,TOP+boardH/2,boardW+12,boardH+12,0x202d38));
     for(let y=0;y<this.state.grid.level.height;y++)for(let x=0;x<this.state.grid.level.width;x++){
-      const tile=this.add.rectangle(LEFT+x*CELL+CELL/2,TOP+y*CELL+CELL/2,CELL-2,CELL-2,0x293846).setStrokeStyle(1,0x3a4b5b);
+      const px=LEFT+x*CELL+CELL/2,py=TOP+y*CELL+CELL/2;
+      const tile=this.add.rectangle(px,py,CELL-2,CELL-2,(x+y)%2===0?0x2b3945:0x263541).setStrokeStyle(1,0x405261);
       this.boardLayer.add(tile);
-      if((x+y)%2===0){const dash=this.add.rectangle(LEFT+x*CELL+CELL/2,TOP+y*CELL+CELL/2,2,8,0x91a4b5,.12);this.boardLayer.add(dash);}
+      // Fine asphalt grain and reflective lane studs add road texture without sprite cost.
+      if((x*3+y*5)%4===0){
+        this.boardLayer.add(this.add.circle(px-15,py-13,1,0x8da0ae,.22));
+        this.boardLayer.add(this.add.circle(px+13,py+15,1,0x8da0ae,.18));
+      }
+      if(x===0||y===0||x===this.state.grid.level.width-1||y===this.state.grid.level.height-1){
+        this.boardLayer.add(this.add.rectangle(px,py,3,3,0xfbbf24,.5));
+      }
+    }
+    // Subtle centre guide markings make the grid read as a connected junction.
+    for(let x=0;x<this.state.grid.level.width;x++){
+      const px=LEFT+x*CELL+CELL/2;
+      this.boardLayer.add(this.add.rectangle(px,TOP-8,18,2,0xf8fafc,.32));
+      this.boardLayer.add(this.add.rectangle(px,TOP+boardH+8,18,2,0xf8fafc,.32));
+    }
+    for(let y=0;y<this.state.grid.level.height;y++){
+      const py=TOP+y*CELL+CELL/2;
+      this.boardLayer.add(this.add.rectangle(LEFT-8,py,2,18,0xf8fafc,.32));
+      this.boardLayer.add(this.add.rectangle(LEFT+boardW+8,py,2,18,0xf8fafc,.32));
     }
     for(const obstacle of this.state.grid.level.obstacles)this.drawObstacle(obstacle);
     for(const vehicle of this.state.grid.vehicles)this.drawVehicle(vehicle);
