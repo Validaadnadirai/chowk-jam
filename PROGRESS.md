@@ -33,5 +33,14 @@
 - [x] Added a reusable Phaser vector vehicle-art renderer with separate silhouettes and roof/window treatments for auto-rickshaw, electric rickshaw, tempo and bus.
 - [x] Integrated the renderer into the existing gameplay scene without changing vehicle movement, hitboxes, exit rules, progression or save data.
 - [x] Expanded the vehicle type model and vector renderer to include hatchback, yellow taxi and mini-truck with distinct roof/cabin/cargo details; existing level JSON fields remain unchanged.
-- [x] Added a more layered asphalt junction surface, reflective edge studs and subtle lane-guide markings using lightweight vector primitives.\n- [ ] Complete responsive visual review and consider a dedicated HUD layout pass.
-- [ ] Run lint, tests, level validation and production build; physical Android verification remains separate.
+- [x] Added a more layered asphalt junction surface, reflective edge studs and subtle lane-guide markings using lightweight vector primitives.
+- [ ] Complete responsive visual review and consider a dedicated HUD layout pass.
+- [x] Latest Batch 6 CI and Android debug APK workflows passed on commit `7915450`.
+- [ ] Physical Android install, visual review and performance profiling remain outstanding.
+
+## Batch 7 — World Map & Level Selection (in progress)
+- [x] Added a city-map level selection scene with three themed districts and ten level nodes.
+- [x] Locked/unlocked/completed level states are driven by existing local progression data.
+- [x] Home Play now opens the world map; selecting an unlocked node launches its matching level.
+- [ ] Add richer district artwork and verify all navigation states on a physical Android device.
+- [ ] Run CI, level validation, production build and Android APK workflow for this batch.

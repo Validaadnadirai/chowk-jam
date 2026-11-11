@@ -34,7 +34,7 @@ export class GameScene extends Phaser.Scene {
   private lastSignalPhase=0;
   private progress:PlayerProgress=loadProgress();
   constructor(){super('Game');}
-  create():void{
+  create(data:{levelId?:number}={}):void{
     this.cameras.main.setBackgroundColor('#101923');
     this.add.text(180,28,'CHOWK JAM',{fontSize:'24px',color:'#f8fafc',fontStyle:'bold'}).setOrigin(.5);
     this.levelTitle=this.add.text(180,65,'',{fontSize:'11px',color:'#fbbf24'}).setOrigin(.5);
@@ -47,12 +47,7 @@ export class GameScene extends Phaser.Scene {
     this.bayText=this.add.text(180,480,'',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5);
     this.add.text(180,515,'PASSENGER STREAM',{fontSize:'9px',color:'#94a3b8'}).setOrigin(.5);
     this.add.text(180,500,'COINS: '+this.progress.coins,{fontSize:'11px',color:'#fbbf24'}).setOrigin(.5);
-    this.add.text(180,550,'SELECT LEVEL',{fontSize:'9px',color:'#94a3b8'}).setOrigin(.5);
-    LEVELS.forEach((level,index)=>{
-      const x=22+index*35;
-      const button=this.add.text(x,575,String(index+1),{fontSize:'12px',color:'#101923',backgroundColor:'#fbbf24',padding:{x:8,y:6}}).setOrigin(.5).setInteractive({useHandCursor:true});
-      button.on('pointerdown',()=>this.loadLevel(level));
-    });
+    this.add.text(180,550,'CHOOSE YOUR NEXT ROUTE FROM THE CITY MAP',{fontSize:'8px',color:'#94a3b8'}).setOrigin(.5);
     const undo=this.add.text(85,620,'↶ UNDO',{fontSize:'12px',color:'#38bdf8'}).setOrigin(.5).setInteractive();
     undo.on('pointerdown',()=>{if(this.history.length){this.state=this.history.pop()!;this.refresh();this.playTone(420,70);}});
     const pause=this.add.text(180,620,'Ⅱ PAUSE',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5).setInteractive();
@@ -63,7 +58,8 @@ export class GameScene extends Phaser.Scene {
     this.addBoosterButton(136,600,'+ BAY','extra-slot',80);
     this.addBoosterButton(224,600,'SHUFFLE','shuffle',20);
     this.addBoosterButton(312,600,'UNDO','undo',25);
-    this.loadLevel(LEVELS[0]);
+    const requested=LEVELS.find(level=>level.id===data.levelId&&level.id<=this.progress.unlockedLevel);
+    this.loadLevel(requested??LEVELS[Math.min(this.progress.unlockedLevel-1,LEVELS.length-1)]??LEVELS[0]);
   }
   private loadLevel(level:LevelDefinition):void{
     this.state=createFullGame(level);this.history=[];this.paused=false;this.lastSignalPhase=0;this.levelTitle.setText('LEVEL '+level.id+' • '+level.name.toUpperCase());this.refresh();
