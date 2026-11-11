@@ -18,6 +18,11 @@ export function createVehicleArt(scene: Phaser.Scene, vehicle: Vehicle, width: n
   body.fillStyle(color, 1);
   const radius = vehicle.type === 'mini-truck' ? 3 : vehicle.type === 'auto' ? 7 : 9;
   body.fillRoundedRect(-length * .46, -depth * .43, length * .92, depth * .76, radius);
+  // Lower sill and front/rear fascia give each vehicle a stronger toy-like profile.
+  body.fillStyle(0x101a22, .72);
+  body.fillRoundedRect(-length * .42, depth * .22, length * .84, depth * .11, Math.max(2, depth * .035));
+  body.fillStyle(Phaser.Display.Color.IntegerToColor(color).lighten(18).color, .8);
+  body.fillRoundedRect(-length * .34, -depth * .405, length * .68, Math.max(1.5, depth * .035), 2);
   body.lineStyle(1.5, 0xffffff, .7);
   body.strokeRoundedRect(-length * .46, -depth * .43, length * .92, depth * .76, radius);
   group.add(body);
@@ -71,20 +76,75 @@ export function createVehicleArt(scene: Phaser.Scene, vehicle: Vehicle, width: n
   wheels.fillStyle(0x71808b,1);
   wheels.fillCircle(-length*.275,depth*.35,Math.max(1.5,depth*.055));
   wheels.fillCircle(length*.335,depth*.35,Math.max(1.5,depth*.055));
+  wheels.fillStyle(0xc2ccd2, .95);
+  wheels.fillCircle(-length*.275,depth*.35,Math.max(1,depth*.025));
+  wheels.fillCircle(length*.335,depth*.35,Math.max(1,depth*.025));
   group.add(wheels);
 
   const details=scene.add.graphics();
   details.fillStyle(0xfff0b5,1); details.fillRoundedRect(length*.39,-depth*.25,Math.max(3,length*.055),depth*.16,2);
   details.fillStyle(0xe85b4a,1); details.fillRoundedRect(-length*.45,-depth*.23,Math.max(3,length*.05),depth*.15,2);
   details.lineStyle(1,0xffffff,.38); details.lineBetween(-length*.38,depth*.04,length*.37,depth*.04);
+  // Mirrors, bumpers and a restrained center highlight improve readability at small sizes.
+  details.fillStyle(0x17232d, 1);
+  details.fillRoundedRect(length*.18, -depth*.32, Math.max(3, length*.055), Math.max(2, depth*.07), 2);
+  details.fillRoundedRect(-length*.29, -depth*.32, Math.max(3, length*.055), Math.max(2, depth*.07), 2);
+  details.fillStyle(0xffffff, .2);
+  details.fillRoundedRect(-length*.22, -depth*.02, length*.44, Math.max(1, depth*.025), 2);
   if(vehicle.type==='taxi'){
     details.fillStyle(0x17232d,1); details.fillRect(-length*.22,depth*.12,length*.44,depth*.07);
     for(let i=0;i<5;i++){details.fillStyle(i%2===0?0xf8fafc:0x17232d,1);details.fillRect(-length*.21+i*length*.085,depth*.12,length*.085,depth*.07);}
   }
+  // Fine trim: door seams, side windows and reflective wheel hubs add definition
+  // while remaining vector-only (no texture downloads or per-frame allocations).
+  details.lineStyle(1,0x10202b,.55);
+  if(vehicle.type==='bus'){
+    for(let i=0;i<4;i++) details.lineBetween(-length*.35+i*length*.19,depth*.02,-length*.35+i*length*.19,depth*.2);
+    details.lineStyle(1,0xf8fafc,.28);details.lineBetween(-length*.39,-depth*.31,length*.39,-depth*.31);
+  }else if(vehicle.type==='mini-truck'){
+    details.lineBetween(-length*.05,-depth*.34,-length*.05,depth*.27);
+    details.lineStyle(1,0xf4d4a5,.75);details.lineBetween(length*.1,depth*.08,length*.38,depth*.08);
+  }else{
+    details.lineBetween(-length*.02,-depth*.34,-length*.02,depth*.27);
+    details.lineStyle(1,0xffffff,.32);details.lineBetween(-length*.34,depth*.12,-length*.08,depth*.12);
+  }
+  details.fillStyle(0xfff6d6,.95);
+  details.fillCircle(length*.43,-depth*.17,Math.max(1.2,depth*.035));
+  details.fillStyle(0xff6b5e,.95);
+  details.fillCircle(-length*.43,-depth*.17,Math.max(1.2,depth*.035));
   group.add(details);
+  // Two compact alloy hubs reinforce the vehicle's side profile.
+  const hubs=scene.add.graphics();
+  hubs.fillStyle(0x0b1118,1);
+  hubs.fillCircle(-length*.275,depth*.35,Math.max(2,depth*.09));
+  hubs.fillCircle(length*.335,depth*.35,Math.max(2,depth*.09));
+  hubs.fillStyle(0xb7c5cc,1);
+  hubs.fillCircle(-length*.275,depth*.35,Math.max(1,depth*.038));
+  hubs.fillCircle(length*.335,depth*.35,Math.max(1,depth*.038));
+  group.add(hubs);
   if(vehicle.type==='auto'){
+    // The auto's exposed front wheel and canopy trim distinguish its three-wheeler silhouette.
     group.add(scene.add.circle(-length*.38,depth*.39,Math.max(2,depth*.1),0x111820));
     group.add(scene.add.circle(length*.39,depth*.39,Math.max(2,depth*.1),0x111820));
+    const trim=scene.add.graphics();
+    trim.lineStyle(Math.max(1,depth*.035),0xf5d36b,.95);
+    trim.lineBetween(-length*.1,-depth*.49,length*.27,-depth*.49);
+    trim.lineStyle(1,0x17232d,.9); trim.lineBetween(length*.31,-depth*.27,length*.39,-depth*.18);
+    group.add(trim);
+  }
+  if(vehicle.type==='bus'){
+    const stripe=scene.add.graphics();
+    stripe.fillStyle(0xf8d56a,.95); stripe.fillRect(-length*.39,depth*.08,length*.78,Math.max(2,depth*.045));
+    stripe.fillStyle(0x17232d,.9); stripe.fillRect(-length*.39,depth*.16,length*.78,Math.max(1,depth*.025));
+    group.add(stripe);
+  }
+  if(vehicle.type==='mini-truck'){
+    const cargo=scene.add.graphics();
+    cargo.lineStyle(1,0xf2d2a4,.85);
+    cargo.lineBetween(length*.1,-depth*.34,length*.38,-depth*.34);
+    cargo.lineBetween(length*.1,depth*.02,length*.38,depth*.02);
+    cargo.lineBetween(length*.24,-depth*.34,length*.24,depth*.02);
+    group.add(cargo);
   }
   const labels:Record<string,string>={auto:'AUTO',erickshaw:'E-RICK',tempo:'TEMPO',bus:'BUS',hatchback:'CITY',taxi:'TAXI', 'mini-truck':'CARGO'};
   if(length>65) group.add(scene.add.text(0,depth*.1,labels[vehicle.type],{
