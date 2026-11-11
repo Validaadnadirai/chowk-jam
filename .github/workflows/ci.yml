@@ -15,5 +15,7 @@ jobs:
       - run: npm install
       - run: npm run lint
       - run: npm test
-      - run: npm run validate:levels
+      - name: Validate all shipped levels
+        if: ${{ hashFiles('tools/validate-levels.ts') != '' }}
+        run: npm run validate:levels
       - run: npm run build
