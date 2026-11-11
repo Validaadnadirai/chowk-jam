@@ -1,0 +1,11 @@
+# Engineering Decisions
+- Stack: Vite + TypeScript + Phaser 3, wrapped with Capacitor for Android.
+- Portrait canvas: 360×640 logical resolution, FIT scaling and centered canvas; CSS respects safe-area insets.
+- Grid rules are framework-independent TypeScript and tested with Vitest.
+- Vehicle x,y identify the leftmost/topmost occupied cell. Facing must align with orientation.
+- A vehicle exits when all cells between its front edge and board boundary are free of other vehicles, obstacles and optional closed signal cells.
+- Only successful exits increment moves; blocked taps leave state unchanged.
+- Undo snapshots are recorded only for successful moves.
+- JSON level shape is checked at runtime; no additional schema library is needed yet.
+- No optional Capacitor plugins are installed in M1/M2. Review compatibility in the milestone where each plugin is needed.
+- Provisional package ID: com.validaad.chowkjam; owner confirmation required before release.
