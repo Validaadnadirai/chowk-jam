@@ -114,10 +114,18 @@
 - [ ] GitHub CI for the exact Batch 14 head is pending; do not treat it as passed until the run completes successfully.
 
 
-## Batch 15 — Home Progress & World Map Touch Polish (CI pending)
+## Batch 15 — Home Progress & World Map Touch Polish (lint fix applied; CI recheck pending)
 - [x] Added a compact city-completion progress bar and completed-level count to the home progress card.
 - [x] Added per-district cleared-level counts to the world map using the existing completion data.
 - [x] Added a larger transparent touch zone over each unlocked level card so the full card area is selectable on mobile.
 - [x] Kept level unlock rules, progression storage, level IDs, and gameplay start routing unchanged.
 - [ ] Verify home/map spacing and touch accuracy on physical Android devices; no device QA is claimed.
-- [ ] GitHub CI for the exact Batch 15 head is pending.
+- [x] Removed an unused progress-bar binding flagged by ESLint; CI recheck on fix commit `2c1c9cb` is pending.
+
+
+## Batch 16 — Tutorial & Settings Onboarding Polish (CI pending)
+- [x] Rebuilt the tutorial as a five-step quick guide with clearer hierarchy, compact step cards and a larger confirmation target.
+- [x] Reworked settings into consistent full-row touch controls with visible current values for language, sound, music and vibration.
+- [x] Preserved the existing language rotation, preference values, saveProgress persistence and tutorialSeen behavior.
+- [ ] Verify modal layout, touch behavior and saved preferences on a physical Android device; no device QA is claimed.
+- [ ] Run lint, tests, level validation and production build on the exact Batch 16 head.

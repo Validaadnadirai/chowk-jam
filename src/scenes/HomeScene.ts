@@ -57,25 +57,63 @@ export class HomeScene extends Phaser.Scene {
   }
 
   private showTutorial():void{
-    const panel=this.add.rectangle(180,330,320,360,0x0b1520,.98).setStrokeStyle(2,0xfbbf24);
-    const heading=this.add.text(180,185,'HOW TO PLAY',{fontSize:'20px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(.5);
-    const copy=this.add.text(180,310,'1. Tap a vehicle to send it out.\n\n2. Make sure its exit lane is clear.\n\n3. Match passengers with vehicle colours.\n\n4. Watch the signal lanes.\n\n5. Clear every vehicle to win!',{fontSize:'13px',color:'#f8fafc',align:'left',lineSpacing:7,wordWrap:{width:270}}).setOrigin(.5);
-    const close=this.add.text(180,470,'GOT IT',{fontSize:'13px',color:'#101923',backgroundColor:'#fbbf24',padding:{x:22,y:9}}).setOrigin(.5).setInteractive();
-    close.on('pointerdown',()=>{panel.destroy();heading.destroy();copy.destroy();close.destroy();this.progress.tutorialSeen=true;saveProgress(this.progress);});
+    const shade=this.add.rectangle(180,320,360,640,0x030912,.78).setDepth(20).setInteractive();
+    const panel=this.add.rectangle(180,320,326,430,0x102235,.99).setStrokeStyle(2,0xfbbf24).setDepth(21);
+    const eyebrow=this.add.text(180,145,'CHOWK JAM  /  QUICK GUIDE',{fontSize:'8px',color:'#91a9bc',letterSpacing:2,fontStyle:'bold'}).setOrigin(.5).setDepth(22);
+    const heading=this.add.text(180,177,'HOW TO PLAY',{fontSize:'22px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(.5).setDepth(22);
+    const steps=[
+      {n:'01',title:'PICK A VEHICLE',body:'Tap a vehicle to send it toward its exit.'},
+      {n:'02',title:'CHECK THE ROAD',body:'Keep its exit lane clear of traffic and obstacles.'},
+      {n:'03',title:'MOVE PASSENGERS',body:'Match passengers with the correct vehicle colours.'},
+      {n:'04',title:'READ THE SIGNALS',body:'Use the active lane signal to plan your moves.'},
+      {n:'05',title:'CLEAR THE CHOWK',body:'Get every vehicle out before you run out of moves.'}
+    ];
+    const objects:Phaser.GameObjects.GameObject[]=[shade,panel,eyebrow,heading];
+    steps.forEach((step,index)=>{
+      const y=222+index*57;
+      const row=this.add.rectangle(180,y+10,282,48,0x1a3449,.96).setStrokeStyle(1,0x35546b).setDepth(22);
+      const number=this.add.text(52,y+10,step.n,{fontSize:'11px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(.5).setDepth(23);
+      const title=this.add.text(76,y-3,step.title,{fontSize:'9px',color:'#f8fafc',fontStyle:'bold',letterSpacing:1}).setDepth(23);
+      const body=this.add.text(76,y+13,step.body,{fontSize:'8px',color:'#a9bdcc',wordWrap:{width:224}}).setDepth(23);
+      objects.push(row,number,title,body);
+    });
+    const close=this.add.rectangle(180,500,230,42,0xfbbf24,1).setDepth(22).setInteractive({useHandCursor:true});
+    const closeText=this.add.text(180,500,'GOT IT  ✓',{fontSize:'12px',color:'#101923',fontStyle:'bold'}).setOrigin(.5).setDepth(23);
+    objects.push(close,closeText);
+    const dismiss=()=>{objects.forEach(object=>object.destroy());this.progress.tutorialSeen=true;saveProgress(this.progress);};
+    close.on('pointerdown',dismiss);
+    closeText.setInteractive().on('pointerdown',dismiss);
   }
 
   private showSettings():void{
-    const panel=this.add.rectangle(180,330,320,350,0x0b1520,.98).setStrokeStyle(2,0xfbbf24);
-    const heading=this.add.text(180,190,'SETTINGS',{fontSize:'20px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(.5);
-    const language=this.add.text(180,255,'LANGUAGE: '+this.progress.language.toUpperCase(),{fontSize:'13px',color:'#f8fafc',backgroundColor:'#263d50',padding:{x:15,y:9}}).setOrigin(.5).setInteractive();
-    language.on('pointerdown',()=>{const order:Language[]=['en','hi','hinglish'];this.progress.language=order[(order.indexOf(this.progress.language)+1)%order.length];language.setText('LANGUAGE: '+this.progress.language.toUpperCase());saveProgress(this.progress);});
-    const sound=this.add.text(180,315,'SOUND: '+(this.progress.sound?'ON':'OFF'),{fontSize:'13px',color:'#f8fafc',backgroundColor:'#263d50',padding:{x:15,y:9}}).setOrigin(.5).setInteractive();
-    sound.on('pointerdown',()=>{this.progress.sound=!this.progress.sound;sound.setText('SOUND: '+(this.progress.sound?'ON':'OFF'));saveProgress(this.progress);});
-    const music=this.add.text(180,375,'MUSIC: '+(this.progress.music?'ON':'OFF'),{fontSize:'13px',color:'#f8fafc',backgroundColor:'#263d50',padding:{x:15,y:9}}).setOrigin(.5).setInteractive();
-    music.on('pointerdown',()=>{this.progress.music=!this.progress.music;music.setText('MUSIC: '+(this.progress.music?'ON':'OFF'));saveProgress(this.progress);});
-    const vibration=this.add.text(180,435,'VIBRATION: '+(this.progress.vibration?'ON':'OFF'),{fontSize:'13px',color:'#f8fafc',backgroundColor:'#263d50',padding:{x:15,y:9}}).setOrigin(.5).setInteractive();
-    vibration.on('pointerdown',()=>{this.progress.vibration=!this.progress.vibration;vibration.setText('VIBRATION: '+(this.progress.vibration?'ON':'OFF'));saveProgress(this.progress);});
-    const close=this.add.text(180,495,'DONE',{fontSize:'13px',color:'#101923',backgroundColor:'#fbbf24',padding:{x:22,y:9}}).setOrigin(.5).setInteractive();
-    close.on('pointerdown',()=>{panel.destroy();heading.destroy();language.destroy();sound.destroy();music.destroy();vibration.destroy();close.destroy();});
+    const objects:Phaser.GameObjects.GameObject[]=[];
+    const shade=this.add.rectangle(180,320,360,640,0x030912,.78).setDepth(20).setInteractive();
+    const panel=this.add.rectangle(180,320,326,430,0x102235,.99).setStrokeStyle(2,0xfbbf24).setDepth(21);
+    const eyebrow=this.add.text(180,145,'PERSONALISE YOUR GAME',{fontSize:'8px',color:'#91a9bc',letterSpacing:2,fontStyle:'bold'}).setOrigin(.5).setDepth(22);
+    const heading=this.add.text(180,177,'SETTINGS',{fontSize:'22px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(.5).setDepth(22);
+    objects.push(shade,panel,eyebrow,heading);
+    const addOption=(y:number,label:string,value:()=>string,onToggle:()=>void):void=>{
+      const row=this.add.rectangle(180,y,282,52,0x1a3449,.98).setStrokeStyle(1,0x35546b).setDepth(22).setInteractive({useHandCursor:true});
+      const name=this.add.text(58,y,label,{fontSize:'10px',color:'#e8f0f6',fontStyle:'bold'}).setOrigin(0,.5).setDepth(23);
+      const state=this.add.text(300,y,value(),{fontSize:'9px',color:'#fbbf24',fontStyle:'bold',backgroundColor:'#30485b',padding:{x:9,y:6}}).setOrigin(1,.5).setDepth(23);
+      const toggle=()=>{onToggle();state.setText(value());saveProgress(this.progress);};
+      row.on('pointerdown',toggle);
+      name.setInteractive().on('pointerdown',toggle);
+      state.setInteractive().on('pointerdown',toggle);
+      objects.push(row,name,state);
+    };
+    addOption(235,'LANGUAGE',()=>this.progress.language.toUpperCase(),()=>{
+      const order:Language[]=['en','hi','hinglish'];
+      this.progress.language=order[(order.indexOf(this.progress.language)+1)%order.length];
+    });
+    addOption(300,'SOUND',()=>this.progress.sound?'ON':'OFF',()=>{this.progress.sound=!this.progress.sound;});
+    addOption(365,'MUSIC',()=>this.progress.music?'ON':'OFF',()=>{this.progress.music=!this.progress.music;});
+    addOption(430,'VIBRATION',()=>this.progress.vibration?'ON':'OFF',()=>{this.progress.vibration=!this.progress.vibration;});
+    const close=this.add.rectangle(180,505,230,42,0xfbbf24,1).setDepth(22).setInteractive({useHandCursor:true});
+    const closeText=this.add.text(180,505,'SAVE & CLOSE',{fontSize:'11px',color:'#101923',fontStyle:'bold'}).setOrigin(.5).setDepth(23);
+    objects.push(close,closeText);
+    const dismiss=()=>objects.forEach(object=>object.destroy());
+    close.on('pointerdown',dismiss);
+    closeText.setInteractive().on('pointerdown',dismiss);
   }
 }
