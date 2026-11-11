@@ -1,4 +1,4 @@
-import type { Cell, Direction, GameState, LevelDefinition, Vehicle } from './types';
+import type { Cell, GameState, LevelDefinition, Vehicle } from './types';
 export interface SignalLane { orientation: 'row' | 'column'; index: number; group: 'A' | 'B' }
 export interface SignalConfig { flipEvery: number; lanes: SignalLane[] }
 export function signalPhase(moves: number, config?: SignalConfig): 0 | 1 { return config && config.flipEvery > 0 ? (Math.floor(moves / config.flipEvery) % 2) as 0 | 1 : 0; }
