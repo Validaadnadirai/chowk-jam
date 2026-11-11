@@ -1,3 +1,4 @@
+import gameplayConfig from '../data/config/gameplay.json';
 import type { Cell, Direction, ExitOptions, GameState, LevelDefinition, Vehicle } from './types';
 const key = (x: number, y: number): string => x + ',' + y;
 const inside = (level: Pick<LevelDefinition, 'width' | 'height'>, x: number, y: number): boolean => x >= 0 && y >= 0 && x < level.width && y < level.height;
@@ -5,7 +6,7 @@ export function cellsForVehicle(vehicle: Vehicle): Cell[] {
   return Array.from({ length: vehicle.length }, (_, i) => ({ x: vehicle.x + (vehicle.orientation === 'horizontal' ? i : 0), y: vehicle.y + (vehicle.orientation === 'vertical' ? i : 0) }));
 }
 export function validateLevel(level: LevelDefinition): void {
-  if (!Number.isInteger(level.width) || !Number.isInteger(level.height) || level.width < 1 || level.height < 1) throw new Error('Level dimensions must be positive integers');
+  if (!Number.isInteger(level.width) || !Number.isInteger(level.height) || level.width < gameplayConfig.board.minimumDimension || level.height < gameplayConfig.board.minimumDimension || level.width > gameplayConfig.board.maximumDimension || level.height > gameplayConfig.board.maximumDimension) throw new Error('Level dimensions are outside the configured board limits');
   const occupied = new Set<string>();
   for (const obstacle of level.obstacles) {
     if (!inside(level, obstacle.x, obstacle.y)) throw new Error('Obstacle is outside the board');
@@ -17,7 +18,7 @@ export function validateLevel(level: LevelDefinition): void {
   for (const vehicle of level.vehicles) {
     if (!vehicle.id || ids.has(vehicle.id)) throw new Error('Vehicle IDs must be unique');
     ids.add(vehicle.id);
-    if (!Number.isInteger(vehicle.length) || vehicle.length < 1 || vehicle.length > 3) throw new Error('Vehicle length must be 1–3');
+    if (!Number.isInteger(vehicle.length) || vehicle.length < gameplayConfig.vehicles.minimumLength || vehicle.length > gameplayConfig.vehicles.maximumLength) throw new Error('Vehicle length is outside the configured limits');
     if (vehicle.orientation === 'horizontal' && vehicle.facing !== 'left' && vehicle.facing !== 'right') throw new Error('Horizontal vehicle needs left/right facing');
     if (vehicle.orientation === 'vertical' && vehicle.facing !== 'up' && vehicle.facing !== 'down') throw new Error('Vertical vehicle needs up/down facing');
     for (const cell of cellsForVehicle(vehicle)) {
