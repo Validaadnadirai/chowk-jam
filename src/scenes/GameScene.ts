@@ -32,10 +32,12 @@ export class GameScene extends Phaser.Scene {
   private musicGain?:GainNode;
   private soundEnabled=true;
   private lastSignalPhase=0;
+  private lastBayLabel='';
   private progress:PlayerProgress=loadProgress();
   constructor(){super('Game');}
   create(data:{levelId?:number}={}):void{
     this.cameras.main.setBackgroundColor('#101923');
+    this.cameras.main.fadeIn(220,8,18,28);
     this.add.text(180,28,'CHOWK JAM',{fontSize:'24px',color:'#f8fafc',fontStyle:'bold'}).setOrigin(.5);
     this.levelTitle=this.add.text(180,65,'',{fontSize:'11px',color:'#fbbf24'}).setOrigin(.5);
     this.signalText=this.add.text(180,91,'SIGNAL: GREEN',{fontSize:'10px',color:'#86efac'}).setOrigin(.5);
@@ -53,7 +55,7 @@ export class GameScene extends Phaser.Scene {
     const pause=this.add.text(180,620,'Ⅱ PAUSE',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5).setInteractive();
     pause.on('pointerdown',()=>{this.paused=!this.paused;this.status.setText(this.paused?'PAUSED — TAP PAUSE TO RESUME':levelStatus(this.state));});
     const home=this.add.text(278,620,'HOME',{fontSize:'12px',color:'#fbbf24'}).setOrigin(.5).setInteractive();
-    home.on('pointerdown',()=>this.scene.start('Home'));
+    home.on('pointerdown',()=>{if(this.paused)return;this.cameras.main.fadeOut(180,8,18,28);this.cameras.once('camerafadeoutcomplete',()=>this.scene.start('Home'));});
     this.addBoosterButton(48,600,'HINT','hint',30);
     this.addBoosterButton(136,600,'+ BAY','extra-slot',80);
     this.addBoosterButton(224,600,'SHUFFLE','shuffle',20);
@@ -96,7 +98,14 @@ export class GameScene extends Phaser.Scene {
     for(const obstacle of this.state.grid.level.obstacles)this.drawObstacle(obstacle);
     for(const vehicle of this.state.grid.vehicles)this.drawVehicle(vehicle);
     const bay=this.state.bay.map(item=>item.vehicle.type.toUpperCase()+' '+item.boarded+'/'+item.vehicle.seats).join('   ');
-    this.bayText.setText(bay||'— EMPTY —');
+    const bayLabel=bay||'— EMPTY —';
+    this.bayText.setText(bayLabel);
+    if(bayLabel!==this.lastBayLabel){
+      this.lastBayLabel=bayLabel;
+      this.tweens.killTweensOf(this.bayText);
+      this.bayText.setScale(.88).setAlpha(.65);
+      this.tweens.add({targets:this.bayText,scale:1,alpha:1,duration:240,ease:'Back.Out'});
+    }
     const colors=this.state.passengerStream.map((p,i)=>this.add.circle(48+i*22,535,6,Phaser.Display.Color.HexStringToColor(p.color).color));
     colors.forEach((circle,index)=>{this.boardLayer.add(circle);this.tweens.add({targets:circle,x:circle.x-18,duration:900+index*70,repeat:-1,ease:'Linear'});this.tweens.add({targets:circle,scale:1.22,alpha:.72,duration:420+index*35,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});});
     this.status.setText(levelStatus(this.state));
@@ -170,10 +179,13 @@ export class GameScene extends Phaser.Scene {
     if(won)for(let i=0;i<28;i++){const bit=this.add.rectangle(Phaser.Math.Between(42,318),Phaser.Math.Between(180,250),Phaser.Math.Between(3,6),Phaser.Math.Between(5,10),Phaser.Display.Color.GetColor(Phaser.Math.Between(80,255),Phaser.Math.Between(80,255),Phaser.Math.Between(80,255)));this.tweens.add({targets:bit,y:Phaser.Math.Between(340,420),x:bit.x+Phaser.Math.Between(-45,45),angle:Phaser.Math.Between(-180,180),alpha:0,duration:Phaser.Math.Between(650,1050),onComplete:()=>bit.destroy()});}
     if(won){this.progress=awardLevel(this.progress,this.state.grid.level.id,starsForMoves(this.state.grid.moves,this.state.par));saveProgress(this.progress);}
     const stars=won?'★'.repeat(starsForMoves(this.state.grid.moves,this.state.par)):'';
-    const panel=this.add.rectangle(180,300,270,120,0x0b1220,.96).setStrokeStyle(2,won?0xfbbf24:0xf87171);
-    const text=this.add.text(180,278,title+'\\n'+stars+'\\n'+(won?'MOVES: '+this.state.grid.moves:'REASON: '+this.state.failReason),{fontSize:'18px',color:'#f8fafc',align:'center',lineSpacing:8}).setOrigin(.5);
-    const action=this.add.text(180,340,won?'NEXT LEVEL':'RETRY',{fontSize:'12px',color:'#101923',backgroundColor:'#fbbf24',padding:{x:14,y:8}}).setOrigin(.5).setInteractive();
-    action.on('pointerdown',()=>{if(won){const next=LEVELS.find(level=>level.id===this.state.grid.level.id+1);if(next)this.loadLevel(next);else this.loadLevel(LEVELS[0]);}else this.loadLevel(LEVELS.find(level=>level.id===this.state.grid.level.id)!);});
+    const panel=this.add.rectangle(180,300,270,120,0x0b1220,.96).setStrokeStyle(2,won?0xfbbf24:0xf87171).setScale(.86).setAlpha(0);
+    const text=this.add.text(180,278,title+'\\n'+stars+'\\n'+(won?'MOVES: '+this.state.grid.moves:'REASON: '+this.state.failReason),{fontSize:'18px',color:'#f8fafc',align:'center',lineSpacing:8}).setOrigin(.5).setAlpha(0);
+    const action=this.add.text(180,340,won?'NEXT LEVEL':'RETRY',{fontSize:'12px',color:'#101923',backgroundColor:'#fbbf24',padding:{x:14,y:8}}).setOrigin(.5).setInteractive().setAlpha(0);
+    this.tweens.add({targets:panel,scale:1,alpha:1,duration:260,ease:'Back.Out'});
+    this.tweens.add({targets:[text,action],alpha:1,duration:220,delay:100});
+    this.tweens.add({targets:action,scale:1.04,duration:650,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
+    action.on('pointerdown',()=>{if(this.paused)return;this.cameras.main.fadeOut(180,8,18,28);this.cameras.once('camerafadeoutcomplete',()=>{if(won){const next=LEVELS.find(level=>level.id===this.state.grid.level.id+1);if(next)this.loadLevel(next);else this.loadLevel(LEVELS[0]);}else this.loadLevel(LEVELS.find(level=>level.id===this.state.grid.level.id)!);this.cameras.main.fadeIn(180,8,18,28);});});
     this.boardLayer.add([panel,text,action]);
   }
 }
