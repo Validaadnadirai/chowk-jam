@@ -57,6 +57,10 @@ export class GameScene extends Phaser.Scene {
     pause.on('pointerdown',()=>{this.paused=!this.paused;this.status.setText(this.paused?'PAUSED — TAP PAUSE TO RESUME':levelStatus(this.state));});
     const home=this.add.text(278,620,'HOME',{fontSize:'12px',color:'#fbbf24'}).setOrigin(.5).setInteractive();
     home.on('pointerdown',()=>this.scene.start('Home'));
+    this.addBoosterButton(48,600,'HINT','hint',30);
+    this.addBoosterButton(136,600,'+ BAY','extra-slot',80);
+    this.addBoosterButton(224,600,'SHUFFLE','shuffle',20);
+    this.addBoosterButton(312,600,'UNDO','undo',25);
     this.loadLevel(LEVELS[0]);
   }
   private loadLevel(level:LevelDefinition):void{
