@@ -7,7 +7,7 @@ import './style.css';
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO, parent: 'game-root', backgroundColor: '#101923',
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH, width: 360, height: 640 },
-  render: { antialias: true, pixelArt: false, roundPixels: false, resolution: Math.min(window.devicePixelRatio || 1, 3) },
+  render: { antialias: true, pixelArt: false, roundPixels: false },
   scene: [BootScene, SplashScene, HomeScene, GameScene]
 };
 new Phaser.Game(config);
