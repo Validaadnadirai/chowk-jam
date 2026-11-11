@@ -60,3 +60,18 @@
 - [x] Added booster-use feedback and guarded the result overlay so it cannot be recreated on repeated refreshes.
 - [x] Added lightweight vehicle-exit spark feedback using short-lived particles.
 - [ ] Verify animation quality on a physical Android device; no device QA is claimed yet.
+
+
+## Batch 9 — Gameplay Feedback (CI passed; device QA pending)
+- [x] Added booster-use confirmation feedback and a guard against recreating the result overlay on repeated refreshes.
+- [x] Added short-lived vehicle-exit spark particles.
+- [x] GitHub Actions push and pull-request CI passed on commit `54b44832beb030e6cf413d47b0d6636da17e1b72`.
+- [ ] Physical Android animation and performance QA remains outstanding.
+
+## Batch 10 — Audio Polish & Runtime Efficiency (CI pending)
+- [x] Added distinct audio confirmation cues for booster actions and refined the blocked-move tone.
+- [x] Resume suspended Web Audio contexts after user interaction where supported; audio remains optional.
+- [x] Clean up ambient audio and close the AudioContext when the scene shuts down or is destroyed.
+- [x] Kill board-object tweens before destroying board objects during refresh to reduce stale animation work.
+- [x] Reduced win-confetti particle count from 28 to 18 for lighter rendering on low-end devices.
+- [ ] Verify sound, scene transitions, and performance on a physical Android device; not yet tested.
