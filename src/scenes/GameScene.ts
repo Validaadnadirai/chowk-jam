@@ -15,6 +15,7 @@ import { parseLevel } from '../core/levelLoader';
 import type { LevelDefinition, Vehicle } from '../core/types';
 import {loadProgress,saveProgress,awardLevel,buyBooster,type PlayerProgress,type BoosterId} from '../core/progression';
 import {activateBooster} from '../core/boosters';
+import { createVehicleArt } from './vehicleArt';
 const LEVELS:LevelDefinition[]=[level1,level2,level3,level4,level5,level6,level7,level8,level9,level10].map(parseLevel);
 const CELL=48,LEFT=36,TOP=154;
 export class GameScene extends Phaser.Scene {
@@ -24,70 +25,127 @@ export class GameScene extends Phaser.Scene {
   private status!:Phaser.GameObjects.Text;
   private levelTitle!:Phaser.GameObjects.Text;
   private signalText!:Phaser.GameObjects.Text;
+  private signalLampA!:Phaser.GameObjects.Arc;
+  private signalLampB!:Phaser.GameObjects.Arc;
   private bayText!:Phaser.GameObjects.Text;
   private paused=false;
+  private resultShown=false;
   private audioContext?:AudioContext;
   private musicOscillator?:OscillatorNode;
   private musicGain?:GainNode;
   private soundEnabled=true;
   private lastSignalPhase=0;
+  private lastBayLabel='';
   private progress:PlayerProgress=loadProgress();
   constructor(){super('Game');}
-  create():void{
+  create(data:{levelId?:number}={}):void{
     this.cameras.main.setBackgroundColor('#101923');
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN,()=>this.cleanupAudio());
+    this.events.once(Phaser.Scenes.Events.DESTROY,()=>this.cleanupAudio());
+    this.progress=loadProgress();
+    this.soundEnabled=this.progress.sound;
+    this.cameras.main.fadeIn(220,8,18,28);
+    // Compact HUD surfaces separate information zones without changing the board or rules.
+    this.add.rectangle(180,78,336,116,0x142638,.96).setStrokeStyle(1,0x3d596d,.9);
+    this.add.rectangle(180,486,336,126,0x142638,.94).setStrokeStyle(1,0x3d596d,.85);
+    this.add.rectangle(180,613,336,52,0x0b1520,.98).setStrokeStyle(1,0x3d596d,.85);
     this.add.text(180,28,'CHOWK JAM',{fontSize:'24px',color:'#f8fafc',fontStyle:'bold'}).setOrigin(.5);
     this.levelTitle=this.add.text(180,65,'',{fontSize:'11px',color:'#fbbf24'}).setOrigin(.5);
     this.signalText=this.add.text(180,91,'SIGNAL: GREEN',{fontSize:'10px',color:'#86efac'}).setOrigin(.5);
+    this.signalLampA=this.add.circle(292,91,5,0x22c55e).setStrokeStyle(1,0xe2e8f0,.55);
+    this.signalLampB=this.add.circle(308,91,5,0x334155).setStrokeStyle(1,0xe2e8f0,.35);
     this.status=this.add.text(180,115,'',{fontSize:'11px',color:'#cbd5e1'}).setOrigin(.5);
-    const sound=this.add.text(318,115,'SOUND ON',{fontSize:'9px',color:'#fbbf24'}).setOrigin(.5).setInteractive();
-    sound.on('pointerdown',()=>{this.soundEnabled=!this.soundEnabled;sound.setText(this.soundEnabled?'SOUND ON':'SOUND OFF');if(this.soundEnabled)this.startAmbient();else if(this.musicGain&&this.audioContext)this.musicGain.gain.setTargetAtTime(0,this.audioContext.currentTime,.08);});
+    const sound=this.add.text(318,115,this.soundEnabled?'SOUND ON':'SOUND OFF',{fontSize:'9px',color:'#fbbf24'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-28,-18,56,36),Phaser.Geom.Rectangle.Contains);
+    sound.on('pointerdown',()=>{this.soundEnabled=!this.soundEnabled;this.progress.sound=this.soundEnabled;saveProgress(this.progress);sound.setText(this.soundEnabled?'SOUND ON':'SOUND OFF');if(this.soundEnabled){if(this.progress.music)this.startAmbient();}else if(this.musicGain&&this.audioContext)this.musicGain.gain.setTargetAtTime(0,this.audioContext.currentTime,.08);});
     this.boardLayer=this.add.container(0,0);
-    this.add.text(180,455,'WAITING BAY',{fontSize:'10px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(.5);
-    this.bayText=this.add.text(180,480,'',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5);
-    this.add.text(180,515,'PASSENGER STREAM',{fontSize:'9px',color:'#94a3b8'}).setOrigin(.5);
-    this.add.text(180,500,'COINS: '+this.progress.coins,{fontSize:'11px',color:'#fbbf24'}).setOrigin(.5);
-    this.add.text(180,550,'SELECT LEVEL',{fontSize:'9px',color:'#94a3b8'}).setOrigin(.5);
-    LEVELS.forEach((level,index)=>{
-      const x=22+index*35;
-      const button=this.add.text(x,575,String(index+1),{fontSize:'12px',color:'#101923',backgroundColor:'#fbbf24',padding:{x:8,y:6}}).setOrigin(.5).setInteractive({useHandCursor:true});
-      button.on('pointerdown',()=>this.loadLevel(level));
-    });
-    const undo=this.add.text(85,620,'↶ UNDO',{fontSize:'12px',color:'#38bdf8'}).setOrigin(.5).setInteractive();
+    this.add.text(180,450,'WAITING BAY',{fontSize:'10px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(.5);
+    this.bayText=this.add.text(180,475,'',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5);
+    this.add.text(180,526,'PASSENGER STREAM',{fontSize:'9px',color:'#94a3b8'}).setOrigin(.5);
+    this.add.text(306,450,'COINS: '+this.progress.coins,{fontSize:'11px',color:'#fbbf24'}).setOrigin(.5);
+    this.add.text(180,570,'CHOOSE YOUR NEXT ROUTE FROM THE CITY MAP',{fontSize:'8px',color:'#94a3b8'}).setOrigin(.5);
+    const undo=this.add.text(85,626,'↶ UNDO',{fontSize:'12px',color:'#38bdf8'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-35,-17,70,34),Phaser.Geom.Rectangle.Contains);
     undo.on('pointerdown',()=>{if(this.history.length){this.state=this.history.pop()!;this.refresh();this.playTone(420,70);}});
-    const pause=this.add.text(180,620,'Ⅱ PAUSE',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5).setInteractive();
+    const pause=this.add.text(180,626,'Ⅱ PAUSE',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-40,-17,80,34),Phaser.Geom.Rectangle.Contains);
     pause.on('pointerdown',()=>{this.paused=!this.paused;this.status.setText(this.paused?'PAUSED — TAP PAUSE TO RESUME':levelStatus(this.state));});
-    const home=this.add.text(278,620,'HOME',{fontSize:'12px',color:'#fbbf24'}).setOrigin(.5).setInteractive();
-    home.on('pointerdown',()=>this.scene.start('Home'));
-    this.addBoosterButton(48,600,'HINT','hint',30);
-    this.addBoosterButton(136,600,'+ BAY','extra-slot',80);
-    this.addBoosterButton(224,600,'SHUFFLE','shuffle',20);
-    this.addBoosterButton(312,600,'UNDO','undo',25);
-    this.loadLevel(LEVELS[0]);
+    const home=this.add.text(278,626,'HOME',{fontSize:'12px',color:'#fbbf24'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-35,-17,70,34),Phaser.Geom.Rectangle.Contains);
+    home.on('pointerdown',()=>{if(this.paused)return;this.cameras.main.fadeOut(180,8,18,28);this.cameras.main.once('camerafadeoutcomplete',()=>this.scene.start('Home'));});
+    this.addBoosterButton(48,588,'HINT','hint',30);
+    this.addBoosterButton(136,588,'+ BAY','extra-slot',80);
+    this.addBoosterButton(224,588,'SHUFFLE','shuffle',20);
+    this.addBoosterButton(312,588,'UNDO','undo',25);
+    const requested=LEVELS.find(level=>level.id===data.levelId&&level.id<=this.progress.unlockedLevel);
+    this.loadLevel(requested??LEVELS[Math.min(this.progress.unlockedLevel-1,LEVELS.length-1)]??LEVELS[0]);
   }
   private loadLevel(level:LevelDefinition):void{
-    this.state=createFullGame(level);this.history=[];this.paused=false;this.lastSignalPhase=0;this.levelTitle.setText('LEVEL '+level.id+' • '+level.name.toUpperCase());this.refresh();
+    this.state=createFullGame(level);this.history=[];this.paused=false;this.resultShown=false;this.lastSignalPhase=0;this.levelTitle.setText('LEVEL '+level.id+' • '+level.name.toUpperCase());this.refresh();
   }
   private refresh():void{
+    // Kill tweens before destroying old board objects; repeated refreshes must not
+    // leave animation work running against discarded objects on low-memory phones.
+    this.boardLayer.list.forEach((object)=>this.tweens.killTweensOf(object));
     this.boardLayer.removeAll(true);
     const boardW=this.state.grid.level.width*CELL,boardH=this.state.grid.level.height*CELL;
-    this.boardLayer.add(this.add.rectangle(LEFT+boardW/2,TOP+boardH/2,boardW+18,boardH+18,0x111c27).setStrokeStyle(2,0x526579));
+    this.boardLayer.add(this.add.rectangle(LEFT+boardW/2,TOP+boardH/2,boardW+24,boardH+24,0x0a1118).setStrokeStyle(3,0x64798a));
+    this.boardLayer.add(this.add.rectangle(LEFT+boardW/2,TOP+boardH/2,boardW+12,boardH+12,0x202d38));
     for(let y=0;y<this.state.grid.level.height;y++)for(let x=0;x<this.state.grid.level.width;x++){
-      const tile=this.add.rectangle(LEFT+x*CELL+CELL/2,TOP+y*CELL+CELL/2,CELL-2,CELL-2,0x293846).setStrokeStyle(1,0x3a4b5b);
+      const px=LEFT+x*CELL+CELL/2,py=TOP+y*CELL+CELL/2;
+      const tile=this.add.rectangle(px,py,CELL-2,CELL-2,(x+y)%2===0?0x2b3945:0x263541).setStrokeStyle(1,0x405261);
       this.boardLayer.add(tile);
-      if((x+y)%2===0){const dash=this.add.rectangle(LEFT+x*CELL+CELL/2,TOP+y*CELL+CELL/2,2,8,0x91a4b5,.12);this.boardLayer.add(dash);}
+      // Fine asphalt grain and reflective lane studs add road texture without sprite cost.
+      if((x*3+y*5)%4===0){
+        this.boardLayer.add(this.add.circle(px-15,py-13,1,0x8da0ae,.22));
+        this.boardLayer.add(this.add.circle(px+13,py+15,1,0x8da0ae,.18));
+      }
+      if(x===0||y===0||x===this.state.grid.level.width-1||y===this.state.grid.level.height-1){
+        this.boardLayer.add(this.add.rectangle(px,py,3,3,0xfbbf24,.5));
+      }
+    }
+    // Junction dressing: compact curb paint, reflective corner studs and road arrows.
+    // All decoration is static vector geometry, so it adds no texture or animation cost.
+    const roadW=this.state.grid.level.width*CELL,roadH=this.state.grid.level.height*CELL;
+    const trim=this.add.graphics();
+    trim.lineStyle(3,0xfbbf24,.62);
+    trim.strokeRect(LEFT-5,TOP-5,roadW+10,roadH+10);
+    trim.lineStyle(2,0xe2e8f0,.32);
+    for(let i=0;i<this.state.grid.level.width;i++){
+      const sx=LEFT+i*CELL+CELL/2;
+      if(i%2===0){trim.lineBetween(sx-5,TOP+roadH+15,sx+5,TOP+roadH+15);trim.lineBetween(sx-5,TOP-15,sx+5,TOP-15);}
+    }
+    trim.fillStyle(0xfbbf24,.48);
+    for(const [sx,sy] of [[LEFT-11,TOP-11],[LEFT+roadW+11,TOP-11],[LEFT-11,TOP+roadH+11],[LEFT+roadW+11,TOP+roadH+11]]) trim.fillCircle(sx,sy,2.2);
+    this.boardLayer.add(trim);
+    // Subtle centre guide markings make the grid read as a connected junction.
+    for(let x=0;x<this.state.grid.level.width;x++){
+      const px=LEFT+x*CELL+CELL/2;
+      this.boardLayer.add(this.add.rectangle(px,TOP-8,18,2,0xf8fafc,.32));
+      this.boardLayer.add(this.add.rectangle(px,TOP+boardH+8,18,2,0xf8fafc,.32));
+    }
+    for(let y=0;y<this.state.grid.level.height;y++){
+      const py=TOP+y*CELL+CELL/2;
+      this.boardLayer.add(this.add.rectangle(LEFT-8,py,2,18,0xf8fafc,.32));
+      this.boardLayer.add(this.add.rectangle(LEFT+boardW+8,py,2,18,0xf8fafc,.32));
     }
     for(const obstacle of this.state.grid.level.obstacles)this.drawObstacle(obstacle);
     for(const vehicle of this.state.grid.vehicles)this.drawVehicle(vehicle);
     const bay=this.state.bay.map(item=>item.vehicle.type.toUpperCase()+' '+item.boarded+'/'+item.vehicle.seats).join('   ');
-    this.bayText.setText(bay||'— EMPTY —');
-    const colors=this.state.passengerStream.map((p,i)=>this.add.circle(48+i*22,535,6,Phaser.Display.Color.HexStringToColor(p.color).color));
-    colors.forEach(circle=>{this.boardLayer.add(circle);this.tweens.add({targets:circle,x:circle.x-18,duration:900,repeat:-1,ease:'Linear'});});
+    const bayLabel=bay||'— EMPTY —';
+    this.bayText.setText(bayLabel);
+    if(bayLabel!==this.lastBayLabel){
+      this.lastBayLabel=bayLabel;
+      this.tweens.killTweensOf(this.bayText);
+      this.bayText.setScale(.88).setAlpha(.65);
+      this.tweens.add({targets:this.bayText,scale:1,alpha:1,duration:240,ease:'Back.Out'});
+    }
+    const colors=this.state.passengerStream.map((p,i)=>this.add.circle(48+i*22,550,6,Phaser.Display.Color.HexStringToColor(p.color).color));
+    colors.forEach((circle,index)=>{this.boardLayer.add(circle);this.tweens.add({targets:circle,x:circle.x-18,duration:1100+index*70,repeat:-1,ease:'Linear'});this.tweens.add({targets:circle,scale:1.16,alpha:.8,duration:520+index*35,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});});
     this.status.setText(levelStatus(this.state));
     const signal=this.state.signal,phase=signal?Math.floor(this.state.grid.moves/signal.flipEvery)%2:0;
-    if(signal&&phase!==this.lastSignalPhase){this.tweens.add({targets:this.signalText,scale:1.15,duration:110,yoyo:true});this.playTone(360,65);}
+    if(signal&&phase!==this.lastSignalPhase){this.tweens.add({targets:this.signalText,scale:1.15,duration:110,yoyo:true});for(const lamp of [this.signalLampA,this.signalLampB]){this.tweens.killTweensOf(lamp);lamp.setScale(1);this.tweens.add({targets:lamp,scale:1.4,alpha:.72,duration:130,yoyo:true,ease:'Sine.easeOut'});}this.playTone(360,65);}
     this.lastSignalPhase=phase;
-    this.signalText.setText(signal?'SIGNAL: '+(phase===0?'A OPEN • B CLOSED':'B OPEN • A CLOSED')+'  NEXT '+(phase===0?'B':'A'):'SIGNAL: NOT ACTIVE');
+    this.signalText.setText(signal?'SIGNAL: '+(phase===0?'A OPEN • B CLOSED':'B OPEN • A CLOSED'):'SIGNAL: NOT ACTIVE');
     this.signalText.setColor(this.state.result==='failed'?'#f87171':'#86efac');
+    this.signalLampA.setFillStyle(!signal?0x64748b:phase===0?0x22c55e:0x334155,1);
+    this.signalLampB.setFillStyle(!signal?0x64748b:phase===1?0x22c55e:0x334155,1);
     if(this.state.result==='won')this.showResult(true);
     if(this.state.result==='failed')this.showResult(false);
   }
@@ -100,63 +158,73 @@ export class GameScene extends Phaser.Scene {
       group.add(this.add.ellipse(-11,-5,12,11,0x343c46));group.add(this.add.ellipse(11,-5,12,11,0x343c46));
       group.add(this.add.triangle(-13,-12,-8,-9,-18,-19,0xe2e8f0));group.add(this.add.triangle(13,-12,8,-9,18,-19,0xe2e8f0));
       group.add(this.add.ellipse(0,7,18,12,0x111827));group.add(this.add.circle(-5,1,2,0xfbbf24));group.add(this.add.circle(5,1,2,0xfbbf24));
+      // Muzzle, nostrils and ear highlights give the buffalo a clearer silhouette.
+      group.add(this.add.ellipse(0,8,11,7,0x59616b));
+      group.add(this.add.circle(-2,8,1,0x111827));group.add(this.add.circle(2,8,1,0x111827));
+      group.add(this.add.triangle(-16,-3,-12,-1,-20,4,0x59616b));group.add(this.add.triangle(16,-3,12,-1,20,4,0x59616b));
     }else if(obstacle.kind==='thela'){
       group.add(this.add.rectangle(0,1,30,19,0xb77932).setStrokeStyle(2,0xf5c06a));
       group.add(this.add.rectangle(0,-8,32,5,0x7c3f22));group.add(this.add.circle(-11,14,4,0x111827));group.add(this.add.circle(11,14,4,0x111827));
       group.add(this.add.circle(-7,-2,4,0xfbbf24));group.add(this.add.circle(4,-2,4,0x65a30d));
+      // Produce crates, handle and a striped fabric canopy make the handcart legible.
+      group.add(this.add.rectangle(0,-12,30,5,0xe7a64c).setStrokeStyle(1,0xf8d28a));
+      group.add(this.add.line(15,4,15,-2,23,-9,0xd6a06a).setLineWidth(2));
+      group.add(this.add.rectangle(-7,-2,2,7,0x854d0e));group.add(this.add.rectangle(5,-2,2,7,0x365314));
     }else{
       group.add(this.add.rectangle(0,1,34,22,0xf8fafc).setStrokeStyle(1,0xcbd5e1));
       for(let i=-1;i<=1;i++)group.add(this.add.rectangle(i*10,1,6,22,0xef4444));
+      group.add(this.add.rectangle(0,-13,34,4,0xfbbf24));
       group.add(this.add.circle(-13,-13,3,0xfbbf24));group.add(this.add.circle(13,-13,3,0xfbbf24));
+      group.add(this.add.rectangle(-12,15,5,5,0x64748b));group.add(this.add.rectangle(12,15,5,5,0x64748b));
     }
     this.boardLayer.add(group);
+    if(obstacle.kind==='bhains'){
+      this.tweens.add({targets:group,scaleY:1.035,duration:1050,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
+    }else if(obstacle.kind==='thela'){
+      this.tweens.add({targets:group,angle:1.2,duration:1800,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
+    }
+  }
+  private showBoosterFeedback(label:string):void{
+    const feedback=this.add.text(180,425,label,{fontSize:'13px',color:'#ffffff',fontStyle:'bold',backgroundColor:'#172b3b',padding:{x:12,y:7},stroke:'#0b1220',strokeThickness:2}).setOrigin(.5).setAlpha(0).setScale(.82);
+    this.tweens.add({targets:feedback,alpha:1,scale:1,y:405,duration:180,ease:'Back.Out',onComplete:()=>this.tweens.add({targets:feedback,alpha:0,y:385,delay:520,duration:260,onComplete:()=>feedback.destroy()})});
+    this.tweens.add({targets:this.status,scale:1.08,duration:100,yoyo:true});
   }
   private addBoosterButton(x:number,y:number,label:string,id:BoosterId,cost:number):void{
-    const button=this.add.text(x,y,label,{fontSize:'9px',color:'#f8fafc',backgroundColor:'#263d50',padding:{x:6,y:6}}).setOrigin(.5).setInteractive();
-    button.on('pointerdown',()=>{if(this.paused||this.state.result!=='playing')return;let next=this.progress;if(next.inventory[id]===0){const purchased=buyBooster(next,id,1);if(!purchased){this.status.setText('NOT ENOUGH COINS');return;}next=purchased;}const result=activateBooster(this.state,next,id,cost);if(!result){this.status.setText('NOT ENOUGH COINS');return;}this.progress=result.progress;this.state=result.state;saveProgress(this.progress);if(id==='undo'&&this.history.length)this.state=this.history.pop()!;if(result.hintVehicleId){const v=this.state.grid.vehicles.find(item=>item.id===result.hintVehicleId);if(v){const ring=this.add.circle(LEFT+v.x*CELL+CELL/2,TOP+v.y*CELL+CELL/2,22).setStrokeStyle(3,0xfbbf24);this.tweens.add({targets:ring,alpha:0,scale:1.8,duration:650,onComplete:()=>ring.destroy()});}}this.refresh();});
+    const button=this.add.text(x,y,label,{fontSize:'9px',color:'#f8fafc',backgroundColor:'#263d50',padding:{x:6,y:6}}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-36,-17,72,34),Phaser.Geom.Rectangle.Contains);
+    button.on('pointerdown',()=>{if(this.paused||this.state.result!=='playing')return;let next=this.progress;if(next.inventory[id]===0){const purchased=buyBooster(next,id,1);if(!purchased){this.status.setText('NOT ENOUGH COINS');return;}next=purchased;}const result=activateBooster(this.state,next,id,cost);if(!result){this.status.setText('NOT ENOUGH COINS');return;}this.progress=result.progress;this.state=result.state;saveProgress(this.progress);if(id==='undo'&&this.history.length)this.state=this.history.pop()!;this.showBoosterFeedback(id==='hint'?'ROUTE HINT':id==='extra-slot'?'WAITING BAY +1':id==='shuffle'?'PASSENGERS SHUFFLED':'MOVE UNDONE');this.playTone(id==='hint'?660:id==='extra-slot'?740:id==='shuffle'?520:440,95);if(result.hintVehicleId){const v=this.state.grid.vehicles.find(item=>item.id===result.hintVehicleId);if(v){const ring=this.add.circle(LEFT+v.x*CELL+CELL/2,TOP+v.y*CELL+CELL/2,22).setStrokeStyle(3,0xfbbf24);this.tweens.add({targets:ring,alpha:0,scale:1.8,duration:650,onComplete:()=>ring.destroy()});}}this.refresh();});
+  }
+  private emitExitSparks(x:number,y:number,color:number):void{
+    for(let i=0;i<7;i++){
+      const angle=(Math.PI*2*i)/7;
+      const spark=this.add.circle(x,y,Phaser.Math.Between(2,4),color,.95);
+      this.tweens.add({targets:spark,x:x+Math.cos(angle)*Phaser.Math.Between(18,34),y:y+Math.sin(angle)*Phaser.Math.Between(18,34),scale:.2,alpha:0,duration:260,ease:'Cubic.easeOut',onComplete:()=>spark.destroy()});
+    }
   }
   private drawVehicle(vehicle:Vehicle):void{
     const horizontal=vehicle.orientation==='horizontal';
     const w=horizontal?vehicle.length*CELL-7:CELL-9,h=horizontal?CELL-9:vehicle.length*CELL-7;
     const px=LEFT+vehicle.x*CELL+(horizontal?w/2+3.5:CELL/2),py=TOP+vehicle.y*CELL+(horizontal?CELL/2:h/2+3.5);
-    const color=Phaser.Display.Color.HexStringToColor(vehicle.color).color;
     const group=this.add.container(px,py).setSize(w,h).setInteractive(new Phaser.Geom.Rectangle(-w/2,-h/2,w,h),Phaser.Geom.Rectangle.Contains);
-    const body=this.add.graphics();body.fillStyle(color,1);body.fillRoundedRect(-w/2,-h/2,w,h,10);body.lineStyle(2,0xf8fafc,.9);body.strokeRoundedRect(-w/2,-h/2,w,h,10);group.add(body);
-    group.add(this.add.ellipse(0,h*.38,w*.82,7,0x050b11,.35));
-    const side=horizontal?w:h;
-    const windowCount=Math.max(1,Math.floor((side-20)/19));
-    for(let i=0;i<windowCount;i++){
-      const pos=-side/2+14+i*((side-28)/Math.max(1,windowCount-1));
-      const win=horizontal?this.add.rectangle(pos,-h*.18,13,Math.max(8,h*.34),0x9bd3e8):this.add.rectangle(-w*.18,pos,Math.max(8,w*.34),13,0x9bd3e8);
-      group.add(win);
-    }
-    const front=vehicle.facing==='right'?1:vehicle.facing==='left'?-1:vehicle.facing==='down'?1:-1;
-    const fx=horizontal?front*w*.39:0,fy=horizontal?0:front*h*.39;
-    group.add(this.add.circle(fx-(horizontal?0:0),fy,4,0xfff3b0));
-    if(vehicle.type==='bus'||vehicle.type==='tempo'){
-      const roof=horizontal?this.add.rectangle(0,h*.13,w*.72,5,0x172b3c,.55):this.add.rectangle(w*.13,0,5,h*.72,0x172b3c,.55);group.add(roof);
-    }
-    if(vehicle.type==='erickshaw'||vehicle.type==='auto'){
-      group.add(this.add.circle(horizontal?0:-w*.3,horizontal?-h*.27:0,5,0x171d24));
-      group.add(this.add.rectangle(0,0,w*.23,h*.72,0xfef3c7,.5));
-    }
-    const wheelPositions=[-.34,.34];
-    for(const p of wheelPositions){
-      const wx=horizontal?p*w:0,wy=horizontal?0:p*h;
-      group.add(this.add.rectangle(wx,wy,8,12,0x111827));
-    }
-    group.add(this.add.text(0,0,vehicle.type==='erickshaw'?'E-R':vehicle.type.toUpperCase(),{fontSize:'8px',color:'#101923',fontStyle:'bold',stroke:'#ffffff',strokeThickness:1}).setOrigin(.5));
+    group.add(createVehicleArt(this,vehicle,w,h));
+    const idleTween=this.tweens.add({targets:group,y:py-1.2,duration:Phaser.Math.Between(1150,1650),yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
     group.on('pointerdown',()=>{
       if(this.paused||this.state.result!=='playing')return;
+      idleTween.pause();
       const next=attemptVehicleExit(this.state,vehicle.id);
-      if(next===this.state){this.tweens.add({targets:group,x:px+5,y:py,duration:45,yoyo:true,repeat:2});this.playTone(130,90);if('vibrate' in navigator)navigator.vibrate?.(35);return;}
+      if(next===this.state){this.tweens.add({targets:group,x:px+5,duration:45,yoyo:true,repeat:2,onComplete:()=>idleTween.resume()});this.playTone(145,85);if(this.progress.vibration&&'vibrate' in navigator)navigator.vibrate?.(35);return;}
       this.history.push(structuredClone(this.state));
-      this.tweens.add({targets:group,alpha:0,scaleX:.75,scaleY:.75,duration:180,onComplete:()=>{this.state=next;this.playTone(520,80);if('vibrate' in navigator)navigator.vibrate?.(18);this.refresh();}});
+      this.tweens.add({targets:group,alpha:0,scaleX:.75,scaleY:.75,duration:180,onComplete:()=>{this.emitExitSparks(px,py,Phaser.Display.Color.HexStringToColor(vehicle.color).color);this.state=next;this.playTone(520,80);if(this.progress.vibration&&'vibrate' in navigator)navigator.vibrate?.(18);this.refresh();}});
     });
     this.boardLayer.add(group);
   }
+  private cleanupAudio():void{
+    try{this.musicGain?.gain.setTargetAtTime(0,this.audioContext?.currentTime??0,.025);this.musicOscillator?.stop();}catch{/* Audio may already be stopped. */}
+    this.musicOscillator=undefined;this.musicGain=undefined;
+    const context=this.audioContext;this.audioContext=undefined;
+    if(context&&context.state!=='closed')void context.close().catch(()=>undefined);
+  }
   private startAmbient():void{
-    if(!this.soundEnabled)return;
+    if(!this.soundEnabled||!this.progress.music)return;
     try{
       this.audioContext??=new AudioContext();
       if(this.musicOscillator&&this.musicGain){this.musicGain.gain.setTargetAtTime(.003,this.audioContext.currentTime,.08);return;}
@@ -167,19 +235,24 @@ export class GameScene extends Phaser.Scene {
   }
   private playTone(frequency:number,duration:number):void{
     if(!this.soundEnabled)return;
-    try{this.audioContext??=new AudioContext();this.startAmbient();const oscillator=this.audioContext.createOscillator();const gain=this.audioContext.createGain();oscillator.frequency.value=frequency;gain.gain.setValueAtTime(.035,this.audioContext.currentTime);gain.gain.exponentialRampToValueAtTime(.001,this.audioContext.currentTime+duration/1000);oscillator.connect(gain);gain.connect(this.audioContext.destination);oscillator.start();oscillator.stop(this.audioContext.currentTime+duration/1000);}catch{/* Audio is optional; gameplay remains available without it. */}
+    try{this.audioContext??=new AudioContext();if(this.audioContext.state==='suspended')void this.audioContext.resume().catch(()=>undefined);this.startAmbient();const oscillator=this.audioContext.createOscillator();const gain=this.audioContext.createGain();oscillator.frequency.value=frequency;gain.gain.setValueAtTime(.035,this.audioContext.currentTime);gain.gain.exponentialRampToValueAtTime(.001,this.audioContext.currentTime+duration/1000);oscillator.connect(gain);gain.connect(this.audioContext.destination);oscillator.start();oscillator.stop(this.audioContext.currentTime+duration/1000);}catch{/* Audio is optional; gameplay remains available without it. */}
   }
   private showResult(won:boolean):void{
+    if(this.resultShown)return;
+    this.resultShown=true;
     const title=won?'CHOWK CLEAR!':'TRY AGAIN';
     this.playTone(won?880:165,won?260:220);
-    if('vibrate' in navigator)navigator.vibrate?.(won?[45,35,90]:[90,45,90]);
-    if(won)for(let i=0;i<28;i++){const bit=this.add.rectangle(Phaser.Math.Between(42,318),Phaser.Math.Between(180,250),Phaser.Math.Between(3,6),Phaser.Math.Between(5,10),Phaser.Display.Color.GetColor(Phaser.Math.Between(80,255),Phaser.Math.Between(80,255),Phaser.Math.Between(80,255)));this.tweens.add({targets:bit,y:Phaser.Math.Between(340,420),x:bit.x+Phaser.Math.Between(-45,45),angle:Phaser.Math.Between(-180,180),alpha:0,duration:Phaser.Math.Between(650,1050),onComplete:()=>bit.destroy()});}
+    if(this.progress.vibration&&'vibrate' in navigator)navigator.vibrate?.(won?[45,35,90]:[90,45,90]);
+    if(won)for(let i=0;i<18;i++){const bit=this.add.rectangle(Phaser.Math.Between(42,318),Phaser.Math.Between(180,250),Phaser.Math.Between(3,6),Phaser.Math.Between(5,10),Phaser.Display.Color.GetColor(Phaser.Math.Between(80,255),Phaser.Math.Between(80,255),Phaser.Math.Between(80,255)));this.tweens.add({targets:bit,y:Phaser.Math.Between(340,420),x:bit.x+Phaser.Math.Between(-45,45),angle:Phaser.Math.Between(-180,180),alpha:0,duration:Phaser.Math.Between(650,1050),onComplete:()=>bit.destroy()});}
     if(won){this.progress=awardLevel(this.progress,this.state.grid.level.id,starsForMoves(this.state.grid.moves,this.state.par));saveProgress(this.progress);}
     const stars=won?'★'.repeat(starsForMoves(this.state.grid.moves,this.state.par)):'';
-    const panel=this.add.rectangle(180,300,270,120,0x0b1220,.96).setStrokeStyle(2,won?0xfbbf24:0xf87171);
-    const text=this.add.text(180,278,title+'\\n'+stars+'\\n'+(won?'MOVES: '+this.state.grid.moves:'REASON: '+this.state.failReason),{fontSize:'18px',color:'#f8fafc',align:'center',lineSpacing:8}).setOrigin(.5);
-    const action=this.add.text(180,340,won?'NEXT LEVEL':'RETRY',{fontSize:'12px',color:'#101923',backgroundColor:'#fbbf24',padding:{x:14,y:8}}).setOrigin(.5).setInteractive();
-    action.on('pointerdown',()=>{if(won){const next=LEVELS.find(level=>level.id===this.state.grid.level.id+1);if(next)this.loadLevel(next);else this.loadLevel(LEVELS[0]);}else this.loadLevel(LEVELS.find(level=>level.id===this.state.grid.level.id)!);});
+    const panel=this.add.rectangle(180,300,270,120,0x0b1220,.96).setStrokeStyle(2,won?0xfbbf24:0xf87171).setScale(.86).setAlpha(0);
+    const text=this.add.text(180,278,title+'\\n'+stars+'\\n'+(won?'MOVES: '+this.state.grid.moves:'REASON: '+this.state.failReason),{fontSize:'18px',color:'#f8fafc',align:'center',lineSpacing:8}).setOrigin(.5).setAlpha(0);
+    const action=this.add.text(180,340,won?'NEXT LEVEL':'RETRY',{fontSize:'12px',color:'#101923',backgroundColor:'#fbbf24',padding:{x:14,y:8}}).setOrigin(.5).setInteractive().setAlpha(0);
+    this.tweens.add({targets:panel,scale:1,alpha:1,duration:260,ease:'Back.Out'});
+    this.tweens.add({targets:[text,action],alpha:1,duration:220,delay:100});
+    this.tweens.add({targets:action,scale:1.04,duration:650,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
+    action.on('pointerdown',()=>{if(this.paused)return;this.cameras.main.fadeOut(180,8,18,28);this.cameras.main.once('camerafadeoutcomplete',()=>{if(won){const next=LEVELS.find(level=>level.id===this.state.grid.level.id+1);if(next)this.loadLevel(next);else this.loadLevel(LEVELS[0]);}else this.loadLevel(LEVELS.find(level=>level.id===this.state.grid.level.id)!);this.cameras.main.fadeIn(180,8,18,28);});});
     this.boardLayer.add([panel,text,action]);
   }
 }
