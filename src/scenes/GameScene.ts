@@ -29,6 +29,7 @@ export class GameScene extends Phaser.Scene {
   private signalLampB!:Phaser.GameObjects.Arc;
   private bayText!:Phaser.GameObjects.Text;
   private paused=false;
+  private resultShown=false;
   private audioContext?:AudioContext;
   private musicOscillator?:OscillatorNode;
   private musicGain?:GainNode;
@@ -68,7 +69,7 @@ export class GameScene extends Phaser.Scene {
     this.loadLevel(requested??LEVELS[Math.min(this.progress.unlockedLevel-1,LEVELS.length-1)]??LEVELS[0]);
   }
   private loadLevel(level:LevelDefinition):void{
-    this.state=createFullGame(level);this.history=[];this.paused=false;this.lastSignalPhase=0;this.levelTitle.setText('LEVEL '+level.id+' • '+level.name.toUpperCase());this.refresh();
+    this.state=createFullGame(level);this.history=[];this.paused=false;this.resultShown=false;this.lastSignalPhase=0;this.levelTitle.setText('LEVEL '+level.id+' • '+level.name.toUpperCase());this.refresh();
   }
   private refresh():void{
     this.boardLayer.removeAll(true);
@@ -148,9 +149,14 @@ export class GameScene extends Phaser.Scene {
       this.tweens.add({targets:group,angle:1.2,duration:1800,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
     }
   }
+  private showBoosterFeedback(label:string,color:number=0xfbbf24):void{
+    const feedback=this.add.text(180,425,label,{fontSize:'13px',color:'#ffffff',fontStyle:'bold',backgroundColor:'#172b3b',padding:{x:12,y:7},stroke:'#0b1220',strokeThickness:2}).setOrigin(.5).setAlpha(0).setScale(.82);
+    this.tweens.add({targets:feedback,alpha:1,scale:1,y:405,duration:180,ease:'Back.Out',onComplete:()=>this.tweens.add({targets:feedback,alpha:0,y:385,delay:520,duration:260,onComplete:()=>feedback.destroy()})});
+    this.tweens.add({targets:this.status,scale:1.08,duration:100,yoyo:true});
+  }
   private addBoosterButton(x:number,y:number,label:string,id:BoosterId,cost:number):void{
     const button=this.add.text(x,y,label,{fontSize:'9px',color:'#f8fafc',backgroundColor:'#263d50',padding:{x:6,y:6}}).setOrigin(.5).setInteractive();
-    button.on('pointerdown',()=>{if(this.paused||this.state.result!=='playing')return;let next=this.progress;if(next.inventory[id]===0){const purchased=buyBooster(next,id,1);if(!purchased){this.status.setText('NOT ENOUGH COINS');return;}next=purchased;}const result=activateBooster(this.state,next,id,cost);if(!result){this.status.setText('NOT ENOUGH COINS');return;}this.progress=result.progress;this.state=result.state;saveProgress(this.progress);if(id==='undo'&&this.history.length)this.state=this.history.pop()!;if(result.hintVehicleId){const v=this.state.grid.vehicles.find(item=>item.id===result.hintVehicleId);if(v){const ring=this.add.circle(LEFT+v.x*CELL+CELL/2,TOP+v.y*CELL+CELL/2,22).setStrokeStyle(3,0xfbbf24);this.tweens.add({targets:ring,alpha:0,scale:1.8,duration:650,onComplete:()=>ring.destroy()});}}this.refresh();});
+    button.on('pointerdown',()=>{if(this.paused||this.state.result!=='playing')return;let next=this.progress;if(next.inventory[id]===0){const purchased=buyBooster(next,id,1);if(!purchased){this.status.setText('NOT ENOUGH COINS');return;}next=purchased;}const result=activateBooster(this.state,next,id,cost);if(!result){this.status.setText('NOT ENOUGH COINS');return;}this.progress=result.progress;this.state=result.state;saveProgress(this.progress);if(id==='undo'&&this.history.length)this.state=this.history.pop()!;this.showBoosterFeedback(id==='hint'?'ROUTE HINT':id==='extra-slot'?'WAITING BAY +1':id==='shuffle'?'PASSENGERS SHUFFLED':'MOVE UNDONE');if(result.hintVehicleId){const v=this.state.grid.vehicles.find(item=>item.id===result.hintVehicleId);if(v){const ring=this.add.circle(LEFT+v.x*CELL+CELL/2,TOP+v.y*CELL+CELL/2,22).setStrokeStyle(3,0xfbbf24);this.tweens.add({targets:ring,alpha:0,scale:1.8,duration:650,onComplete:()=>ring.destroy()});}}this.refresh();});
   }
   private drawVehicle(vehicle:Vehicle):void{
     const horizontal=vehicle.orientation==='horizontal';
@@ -184,6 +190,8 @@ export class GameScene extends Phaser.Scene {
     try{this.audioContext??=new AudioContext();this.startAmbient();const oscillator=this.audioContext.createOscillator();const gain=this.audioContext.createGain();oscillator.frequency.value=frequency;gain.gain.setValueAtTime(.035,this.audioContext.currentTime);gain.gain.exponentialRampToValueAtTime(.001,this.audioContext.currentTime+duration/1000);oscillator.connect(gain);gain.connect(this.audioContext.destination);oscillator.start();oscillator.stop(this.audioContext.currentTime+duration/1000);}catch{/* Audio is optional; gameplay remains available without it. */}
   }
   private showResult(won:boolean):void{
+    if(this.resultShown)return;
+    this.resultShown=true;
     const title=won?'CHOWK CLEAR!':'TRY AGAIN';
     this.playTone(won?880:165,won?260:220);
     if('vibrate' in navigator)navigator.vibrate?.(won?[45,35,90]:[90,45,90]);
