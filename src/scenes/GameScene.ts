@@ -67,7 +67,7 @@ export class GameScene extends Phaser.Scene {
     undo.on('pointerdown',()=>{if(this.history.length){this.state=this.history.pop()!;this.refresh();this.playTone(420,70);}});
     const pause=this.add.text(180,626,'Ⅱ PAUSE',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-40,-17,80,34),Phaser.Geom.Rectangle.Contains);
     pause.on('pointerdown',()=>{this.paused=!this.paused;this.status.setText(this.paused?'PAUSED — TAP PAUSE TO RESUME':levelStatus(this.state));});
-    const home=this.add.text(278,626,'HOME',{fontSize:'12px',color:'#fbbf24'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-34,-22,68,44),Phaser.Geom.Rectangle.Contains);
+    const home=this.add.text(278,626,'HOME',{fontSize:'12px',color:'#fbbf24'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-35,-17,70,34),Phaser.Geom.Rectangle.Contains);
     home.on('pointerdown',()=>{if(this.paused)return;this.cameras.main.fadeOut(180,8,18,28);this.cameras.main.once('camerafadeoutcomplete',()=>this.scene.start('Home'));});
     this.addBoosterButton(48,588,'HINT','hint',30);
     this.addBoosterButton(136,588,'+ BAY','extra-slot',80);
