@@ -41,6 +41,10 @@ export class HomeScene extends Phaser.Scene {
     this.add.text(314,262,'◈ '+this.progress.coins,{fontSize:'13px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(1,.5).setDepth(3);
     const completed=this.progress.completedLevels.length;
     this.add.text(42,284,completed+' LEVELS CLEARED',{fontSize:'8px',color:'#9db0bf'}).setDepth(3);
+    const progressTrack=this.add.rectangle(width/2,307,276,5,0x30495b,.95).setDepth(3);
+    this.add.rectangle(42,307,276*Math.min(1,completed/10),5,0xfbbf24,1).setOrigin(0,.5).setDepth(4);
+    progressTrack.setStrokeStyle(1,0x466177,.8);
+    this.add.text(width-42,284,completed+'/10',{fontSize:'8px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(1,0).setDepth(3);
 
     const play=this.add.text(width/2,458,'▶  '+t(this.progress.language,'play'),{fontSize:'19px',color:'#111923',backgroundColor:'#fbbf24',padding:{x:42,y:15},fontStyle:'bold'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-150,-32,300,64),Phaser.Geom.Rectangle.Contains);
     play.on('pointerdown',()=>this.scene.start('LevelSelect'));

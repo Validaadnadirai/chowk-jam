@@ -112,3 +112,12 @@
 - [x] Rebalanced waiting-bay, coin, passenger-stream and route-hint positions within the existing portrait scene; board geometry and level data remain unchanged.
 - [ ] Verify visual spacing, readability and touch accuracy on physical Android devices; no device QA is claimed.
 - [ ] GitHub CI for the exact Batch 14 head is pending; do not treat it as passed until the run completes successfully.
+
+
+## Batch 15 — Home Progress & World Map Touch Polish (CI pending)
+- [x] Added a compact city-completion progress bar and completed-level count to the home progress card.
+- [x] Added per-district cleared-level counts to the world map using the existing completion data.
+- [x] Added a larger transparent touch zone over each unlocked level card so the full card area is selectable on mobile.
+- [x] Kept level unlock rules, progression storage, level IDs, and gameplay start routing unchanged.
+- [ ] Verify home/map spacing and touch accuracy on physical Android devices; no device QA is claimed.
+- [ ] GitHub CI for the exact Batch 15 head is pending.
