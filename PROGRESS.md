@@ -51,6 +51,8 @@
 ## Batch 8 — Vehicle & Passenger Animation (in progress)
 - [x] Added subtle, low-cost idle motion to vehicles while preserving their existing hitboxes and exit logic.
 - [x] Added staggered passenger-stream movement and pulse animation.
-- [ ] Add polished movement/boarding/departure feedback and scene transitions.
+- [x] Added a compact waiting-bay change pulse so boarding/departure state changes are visually acknowledged.
+- [x] Added short camera fade transitions when leaving gameplay and when advancing/retrying after a result.
+- [x] Added an animated result-panel entrance and restrained next/retry action pulse.
 - [ ] Run lint, tests, level validation and production build; inspect animation lifecycle and low-end performance.
 - [ ] Verify animation quality on a physical Android device; no device QA is claimed yet.
