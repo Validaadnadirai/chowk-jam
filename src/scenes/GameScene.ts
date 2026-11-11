@@ -158,6 +158,13 @@ export class GameScene extends Phaser.Scene {
     const button=this.add.text(x,y,label,{fontSize:'9px',color:'#f8fafc',backgroundColor:'#263d50',padding:{x:6,y:6}}).setOrigin(.5).setInteractive();
     button.on('pointerdown',()=>{if(this.paused||this.state.result!=='playing')return;let next=this.progress;if(next.inventory[id]===0){const purchased=buyBooster(next,id,1);if(!purchased){this.status.setText('NOT ENOUGH COINS');return;}next=purchased;}const result=activateBooster(this.state,next,id,cost);if(!result){this.status.setText('NOT ENOUGH COINS');return;}this.progress=result.progress;this.state=result.state;saveProgress(this.progress);if(id==='undo'&&this.history.length)this.state=this.history.pop()!;this.showBoosterFeedback(id==='hint'?'ROUTE HINT':id==='extra-slot'?'WAITING BAY +1':id==='shuffle'?'PASSENGERS SHUFFLED':'MOVE UNDONE');if(result.hintVehicleId){const v=this.state.grid.vehicles.find(item=>item.id===result.hintVehicleId);if(v){const ring=this.add.circle(LEFT+v.x*CELL+CELL/2,TOP+v.y*CELL+CELL/2,22).setStrokeStyle(3,0xfbbf24);this.tweens.add({targets:ring,alpha:0,scale:1.8,duration:650,onComplete:()=>ring.destroy()});}}this.refresh();});
   }
+  private emitExitSparks(x:number,y:number,color:number):void{
+    for(let i=0;i<7;i++){
+      const angle=(Math.PI*2*i)/7;
+      const spark=this.add.circle(x,y,Phaser.Math.Between(2,4),color,.95);
+      this.tweens.add({targets:spark,x:x+Math.cos(angle)*Phaser.Math.Between(18,34),y:y+Math.sin(angle)*Phaser.Math.Between(18,34),scale:.2,alpha:0,duration:260,ease:'Cubic.easeOut',onComplete:()=>spark.destroy()});
+    }
+  }
   private drawVehicle(vehicle:Vehicle):void{
     const horizontal=vehicle.orientation==='horizontal';
     const w=horizontal?vehicle.length*CELL-7:CELL-9,h=horizontal?CELL-9:vehicle.length*CELL-7;
@@ -171,7 +178,7 @@ export class GameScene extends Phaser.Scene {
       const next=attemptVehicleExit(this.state,vehicle.id);
       if(next===this.state){this.tweens.add({targets:group,x:px+5,duration:45,yoyo:true,repeat:2,onComplete:()=>idleTween.resume()});this.playTone(130,90);if('vibrate' in navigator)navigator.vibrate?.(35);return;}
       this.history.push(structuredClone(this.state));
-      this.tweens.add({targets:group,alpha:0,scaleX:.75,scaleY:.75,duration:180,onComplete:()=>{this.state=next;this.playTone(520,80);if('vibrate' in navigator)navigator.vibrate?.(18);this.refresh();}});
+      this.tweens.add({targets:group,alpha:0,scaleX:.75,scaleY:.75,duration:180,onComplete:()=>{this.emitExitSparks(px,py,Phaser.Display.Color.HexStringToColor(vehicle.color).color);this.state=next;this.playTone(520,80);if('vibrate' in navigator)navigator.vibrate?.(18);this.refresh();}});
     });
     this.boardLayer.add(group);
   }
