@@ -24,6 +24,9 @@ export class GameScene extends Phaser.Scene {
   private bayText!:Phaser.GameObjects.Text;
   private paused=false;
   private audioContext?:AudioContext;
+  private musicOscillator?:OscillatorNode;
+  private musicGain?:GainNode;
+  private soundEnabled=true;
   constructor(){super('Game');}
   create():void{
     this.cameras.main.setBackgroundColor('#101923');
@@ -31,6 +34,8 @@ export class GameScene extends Phaser.Scene {
     this.levelTitle=this.add.text(180,65,'',{fontSize:'11px',color:'#fbbf24'}).setOrigin(.5);
     this.signalText=this.add.text(180,91,'SIGNAL: GREEN',{fontSize:'10px',color:'#86efac'}).setOrigin(.5);
     this.status=this.add.text(180,115,'',{fontSize:'11px',color:'#cbd5e1'}).setOrigin(.5);
+    const sound=this.add.text(318,115,'SOUND ON',{fontSize:'9px',color:'#fbbf24'}).setOrigin(.5).setInteractive();
+    sound.on('pointerdown',()=>{this.soundEnabled=!this.soundEnabled;sound.setText(this.soundEnabled?'SOUND ON':'SOUND OFF');if(this.soundEnabled)this.startAmbient();else if(this.musicGain&&this.audioContext)this.musicGain.gain.setTargetAtTime(0,this.audioContext.currentTime,.08);});
     this.boardLayer=this.add.container(0,0);
     this.add.text(180,455,'WAITING BAY',{fontSize:'10px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(.5);
     this.bayText=this.add.text(180,480,'',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5);
@@ -84,7 +89,7 @@ export class GameScene extends Phaser.Scene {
       const next=attemptVehicleExit(this.state,vehicle.id);
       if(next===this.state){this.tweens.add({targets:rect,x:px+5,y:py,duration:45,yoyo:true,repeat:2});this.playTone(130,90);if('vibrate' in navigator)navigator.vibrate?.(35);return;}
       this.history.push(structuredClone(this.state));
-      this.tweens.add({targets:rect,alpha:0,scaleX:.75,scaleY:.75,duration:180,onComplete:()=>{this.state=next;this.playTone(640,100);if('vibrate' in navigator)navigator.vibrate?.(18);this.refresh();}});
+      this.tweens.add({targets:rect,alpha:0,scaleX:.75,scaleY:.75,duration:180,onComplete:()=>{this.state=next;this.playTone(520,80);if('vibrate' in navigator)navigator.vibrate?.(18);this.refresh();}});
     });
     this.boardLayer.add(rect);
     const label=vehicle.type==='erickshaw'?'E-R':vehicle.type.toUpperCase();
@@ -95,6 +100,9 @@ export class GameScene extends Phaser.Scene {
   }
   private showResult(won:boolean):void{
     const title=won?'CHOWK CLEAR!':'TRY AGAIN';
+    this.playTone(won?880:165,won?260:220);
+    if('vibrate' in navigator)navigator.vibrate?.(won?[45,35,90]:[90,45,90]);
+    if(won)for(let i=0;i<28;i++){const bit=this.add.rectangle(Phaser.Math.Between(42,318),Phaser.Math.Between(180,250),Phaser.Math.Between(3,6),Phaser.Math.Between(5,10),Phaser.Display.Color.GetColor(Phaser.Math.Between(80,255),Phaser.Math.Between(80,255),Phaser.Math.Between(80,255)));this.tweens.add({targets:bit,y:Phaser.Math.Between(340,420),x:bit.x+Phaser.Math.Between(-45,45),angle:Phaser.Math.Between(-180,180),alpha:0,duration:Phaser.Math.Between(650,1050),onComplete:()=>bit.destroy()});}
     const stars=won?'★'.repeat(starsForMoves(this.state.grid.moves,this.state.par)):'';
     const panel=this.add.rectangle(180,300,270,120,0x0b1220,.96).setStrokeStyle(2,won?0xfbbf24:0xf87171);
     const text=this.add.text(180,278,title+'\n'+stars+'\n'+(won?'MOVES: '+this.state.grid.moves:'REASON: '+this.state.failReason),{fontSize:'18px',color:'#f8fafc',align:'center',lineSpacing:8}).setOrigin(.5);
