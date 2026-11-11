@@ -34,7 +34,7 @@ export class GameScene extends Phaser.Scene {
   private lastSignalPhase=0;
   private progress:PlayerProgress=loadProgress();
   constructor(){super('Game');}
-  create():void{
+  create(data:{levelId?:number}={}):void{
     this.cameras.main.setBackgroundColor('#101923');
     this.add.text(180,28,'CHOWK JAM',{fontSize:'24px',color:'#f8fafc',fontStyle:'bold'}).setOrigin(.5);
     this.levelTitle=this.add.text(180,65,'',{fontSize:'11px',color:'#fbbf24'}).setOrigin(.5);
@@ -63,7 +63,7 @@ export class GameScene extends Phaser.Scene {
     this.addBoosterButton(136,600,'+ BAY','extra-slot',80);
     this.addBoosterButton(224,600,'SHUFFLE','shuffle',20);
     this.addBoosterButton(312,600,'UNDO','undo',25);
-    this.loadLevel(LEVELS[0]);
+    const requested=LEVELS.find(level=>level.id===data.levelId&&level.id<=this.progress.unlockedLevel);\n    this.loadLevel(requested??LEVELS[Math.min(this.progress.unlockedLevel-1,LEVELS.length-1)]??LEVELS[0]);
   }
   private loadLevel(level:LevelDefinition):void{
     this.state=createFullGame(level);this.history=[];this.paused=false;this.lastSignalPhase=0;this.levelTitle.setText('LEVEL '+level.id+' • '+level.name.toUpperCase());this.refresh();
