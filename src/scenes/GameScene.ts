@@ -5,9 +5,10 @@ import level3 from '../data/levels/level-3.json';
 import level4 from '../data/levels/level-4.json';
 import level5 from '../data/levels/level-5.json';
 import {createGameState,exitVehicle,isWon} from '../core/grid';
+import {parseLevel} from '../core/levelLoader';
 import {History} from '../core/history';
 import type {GameState,LevelDefinition,Vehicle} from '../core/types';
-const LEVELS:LevelDefinition[]=[level1,level2,level3,level4,level5];
+const LEVELS:LevelDefinition[]=[parseLevel(level1),parseLevel(level2),parseLevel(level3),parseLevel(level4),parseLevel(level5)];
 const CELL=48,LEFT=36,TOP=150;
 export class GameScene extends Phaser.Scene {
   private state!:GameState;
