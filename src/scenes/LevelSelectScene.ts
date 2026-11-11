@@ -90,6 +90,9 @@ export class LevelSelectScene extends Phaser.Scene {
       }
       this.add.text(24,d.y,d.name,{fontSize:'10px',color:'#f8fafc',fontStyle:'bold',letterSpacing:1}).setDepth(2);
       this.add.text(336,d.y,d.range,{fontSize:'8px',color:'#91a4b4'}).setOrigin(1,0).setDepth(2);
+      const districtLevels=LEVELS.filter(level=>level.world===d.name);
+      const districtCleared=districtLevels.filter(level=>this.progress.completedLevels.includes(level.id)).length;
+      this.add.text(336,d.y+13,districtCleared+'/'+districtLevels.length+' CLEARED',{fontSize:'7px',color:'#fbbf24'}).setOrigin(1,0).setDepth(2);
     });
     LEVELS.forEach((level,index)=>{
       const unlocked=level.id<=this.progress.unlockedLevel;
@@ -105,6 +108,10 @@ export class LevelSelectScene extends Phaser.Scene {
       this.add.text(x-w/2+30,y-7,level.name,{fontSize:compact?'8px':'9px',color:unlocked?'#f8fafc':'#718394',fontStyle:'bold'}).setDepth(5);
       this.add.text(x+w/2-8,y+8,completed?'★ CLEARED':unlocked?'PLAY':'LOCKED',{fontSize:'7px',color:completed?'#fbbf24':unlocked?'#7dd3fc':'#607487'}).setOrigin(1,.5).setDepth(5);
       if(unlocked){
+        // A full-card invisible hit zone keeps the level easy to select on touch screens.
+        this.add.rectangle(x,y,w+18,h+16,0xffffff,0.001).setDepth(6)
+          .setInteractive({useHandCursor:true})
+          .on('pointerdown',()=>this.scene.start('Game',{levelId:level.id}));
         card.setInteractive({useHandCursor:true}).on('pointerdown',()=>this.scene.start('Game',{levelId:level.id}));
         marker.setInteractive({useHandCursor:true}).on('pointerdown',()=>this.scene.start('Game',{levelId:level.id}));
       }
