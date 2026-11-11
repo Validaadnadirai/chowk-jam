@@ -1,0 +1,21 @@
+name: CI
+on:
+  push:
+    branches: [main, 'batch-*']
+  pull_request:
+    branches: [main, 'batch-*']
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run lint
+      - run: npm test
+      - name: Validate all shipped levels
+        if: ${{ hashFiles('tools/validate-levels.ts') != '' }}
+        run: npm run validate:levels
+      - run: npm run build

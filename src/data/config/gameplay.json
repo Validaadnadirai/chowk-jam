@@ -1,0 +1,5 @@
+{
+  "board": { "defaultWidth": 6, "defaultHeight": 6, "minimumDimension": 1, "maximumDimension": 8 },
+  "vehicles": { "minimumLength": 1, "maximumLength": 3, "defaultSeatsPerCell": 1 },
+  "moveCounter": { "countOnlySuccessfulExits": true }
+}

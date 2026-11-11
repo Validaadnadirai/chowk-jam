@@ -1,0 +1,1 @@
+{"id":3,"name":"Bus Stand","width":6,"height":6,"vehicles":[{"id":"bus-1","type":"bus","color":"#a78bfa","x":1,"y":1,"length":3,"orientation":"vertical","facing":"down","seats":3}],"obstacles":[]}

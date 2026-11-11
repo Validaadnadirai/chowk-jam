@@ -1,0 +1,1 @@
+{"id":2,"name":"Clear the Lane","width":6,"height":6,"vehicles":[{"id":"erickshaw-1","type":"erickshaw","color":"#38bdf8","x":1,"y":1,"length":2,"orientation":"horizontal","facing":"right","seats":2}],"obstacles":[{"x":4,"y":4,"kind":"thela"}]}
