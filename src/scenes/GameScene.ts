@@ -15,6 +15,7 @@ import { parseLevel } from '../core/levelLoader';
 import type { LevelDefinition, Vehicle } from '../core/types';
 import {loadProgress,saveProgress,awardLevel,buyBooster,type PlayerProgress,type BoosterId} from '../core/progression';
 import {activateBooster} from '../core/boosters';
+import { createVehicleArt } from './vehicleArt';
 const LEVELS:LevelDefinition[]=[level1,level2,level3,level4,level5,level6,level7,level8,level9,level10].map(parseLevel);
 const CELL=48,LEFT=36,TOP=154;
 export class GameScene extends Phaser.Scene {
@@ -70,11 +71,31 @@ export class GameScene extends Phaser.Scene {
   private refresh():void{
     this.boardLayer.removeAll(true);
     const boardW=this.state.grid.level.width*CELL,boardH=this.state.grid.level.height*CELL;
-    this.boardLayer.add(this.add.rectangle(LEFT+boardW/2,TOP+boardH/2,boardW+18,boardH+18,0x111c27).setStrokeStyle(2,0x526579));
+    this.boardLayer.add(this.add.rectangle(LEFT+boardW/2,TOP+boardH/2,boardW+24,boardH+24,0x0a1118).setStrokeStyle(3,0x64798a));
+    this.boardLayer.add(this.add.rectangle(LEFT+boardW/2,TOP+boardH/2,boardW+12,boardH+12,0x202d38));
     for(let y=0;y<this.state.grid.level.height;y++)for(let x=0;x<this.state.grid.level.width;x++){
-      const tile=this.add.rectangle(LEFT+x*CELL+CELL/2,TOP+y*CELL+CELL/2,CELL-2,CELL-2,0x293846).setStrokeStyle(1,0x3a4b5b);
+      const px=LEFT+x*CELL+CELL/2,py=TOP+y*CELL+CELL/2;
+      const tile=this.add.rectangle(px,py,CELL-2,CELL-2,(x+y)%2===0?0x2b3945:0x263541).setStrokeStyle(1,0x405261);
       this.boardLayer.add(tile);
-      if((x+y)%2===0){const dash=this.add.rectangle(LEFT+x*CELL+CELL/2,TOP+y*CELL+CELL/2,2,8,0x91a4b5,.12);this.boardLayer.add(dash);}
+      // Fine asphalt grain and reflective lane studs add road texture without sprite cost.
+      if((x*3+y*5)%4===0){
+        this.boardLayer.add(this.add.circle(px-15,py-13,1,0x8da0ae,.22));
+        this.boardLayer.add(this.add.circle(px+13,py+15,1,0x8da0ae,.18));
+      }
+      if(x===0||y===0||x===this.state.grid.level.width-1||y===this.state.grid.level.height-1){
+        this.boardLayer.add(this.add.rectangle(px,py,3,3,0xfbbf24,.5));
+      }
+    }
+    // Subtle centre guide markings make the grid read as a connected junction.
+    for(let x=0;x<this.state.grid.level.width;x++){
+      const px=LEFT+x*CELL+CELL/2;
+      this.boardLayer.add(this.add.rectangle(px,TOP-8,18,2,0xf8fafc,.32));
+      this.boardLayer.add(this.add.rectangle(px,TOP+boardH+8,18,2,0xf8fafc,.32));
+    }
+    for(let y=0;y<this.state.grid.level.height;y++){
+      const py=TOP+y*CELL+CELL/2;
+      this.boardLayer.add(this.add.rectangle(LEFT-8,py,2,18,0xf8fafc,.32));
+      this.boardLayer.add(this.add.rectangle(LEFT+boardW+8,py,2,18,0xf8fafc,.32));
     }
     for(const obstacle of this.state.grid.level.obstacles)this.drawObstacle(obstacle);
     for(const vehicle of this.state.grid.vehicles)this.drawVehicle(vehicle);
@@ -119,33 +140,8 @@ export class GameScene extends Phaser.Scene {
     const horizontal=vehicle.orientation==='horizontal';
     const w=horizontal?vehicle.length*CELL-7:CELL-9,h=horizontal?CELL-9:vehicle.length*CELL-7;
     const px=LEFT+vehicle.x*CELL+(horizontal?w/2+3.5:CELL/2),py=TOP+vehicle.y*CELL+(horizontal?CELL/2:h/2+3.5);
-    const color=Phaser.Display.Color.HexStringToColor(vehicle.color).color;
     const group=this.add.container(px,py).setSize(w,h).setInteractive(new Phaser.Geom.Rectangle(-w/2,-h/2,w,h),Phaser.Geom.Rectangle.Contains);
-    const body=this.add.graphics();body.fillStyle(color,1);body.fillRoundedRect(-w/2,-h/2,w,h,10);body.lineStyle(2,0xf8fafc,.9);body.strokeRoundedRect(-w/2,-h/2,w,h,10);group.add(body);
-    group.add(this.add.ellipse(0,h*.38,w*.82,7,0x050b11,.35));
-    const side=horizontal?w:h;
-    const windowCount=Math.max(1,Math.floor((side-20)/19));
-    for(let i=0;i<windowCount;i++){
-      const pos=-side/2+14+i*((side-28)/Math.max(1,windowCount-1));
-      const win=horizontal?this.add.rectangle(pos,-h*.18,13,Math.max(8,h*.34),0x9bd3e8):this.add.rectangle(-w*.18,pos,Math.max(8,w*.34),13,0x9bd3e8);
-      group.add(win);
-    }
-    const front=vehicle.facing==='right'?1:vehicle.facing==='left'?-1:vehicle.facing==='down'?1:-1;
-    const fx=horizontal?front*w*.39:0,fy=horizontal?0:front*h*.39;
-    group.add(this.add.circle(fx-(horizontal?0:0),fy,4,0xfff3b0));
-    if(vehicle.type==='bus'||vehicle.type==='tempo'){
-      const roof=horizontal?this.add.rectangle(0,h*.13,w*.72,5,0x172b3c,.55):this.add.rectangle(w*.13,0,5,h*.72,0x172b3c,.55);group.add(roof);
-    }
-    if(vehicle.type==='erickshaw'||vehicle.type==='auto'){
-      group.add(this.add.circle(horizontal?0:-w*.3,horizontal?-h*.27:0,5,0x171d24));
-      group.add(this.add.rectangle(0,0,w*.23,h*.72,0xfef3c7,.5));
-    }
-    const wheelPositions=[-.34,.34];
-    for(const p of wheelPositions){
-      const wx=horizontal?p*w:0,wy=horizontal?0:p*h;
-      group.add(this.add.rectangle(wx,wy,8,12,0x111827));
-    }
-    group.add(this.add.text(0,0,vehicle.type==='erickshaw'?'E-R':vehicle.type.toUpperCase(),{fontSize:'8px',color:'#101923',fontStyle:'bold',stroke:'#ffffff',strokeThickness:1}).setOrigin(.5));
+    group.add(createVehicleArt(this,vehicle,w,h));
     group.on('pointerdown',()=>{
       if(this.paused||this.state.result!=='playing')return;
       const next=attemptVehicleExit(this.state,vehicle.id);
