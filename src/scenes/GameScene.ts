@@ -42,6 +42,8 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#101923');
     this.events.once(Phaser.Scenes.Events.SHUTDOWN,()=>this.cleanupAudio());
     this.events.once(Phaser.Scenes.Events.DESTROY,()=>this.cleanupAudio());
+    this.progress=loadProgress();
+    this.soundEnabled=this.progress.sound;
     this.cameras.main.fadeIn(220,8,18,28);
     this.add.text(180,28,'CHOWK JAM',{fontSize:'24px',color:'#f8fafc',fontStyle:'bold'}).setOrigin(.5);
     this.levelTitle=this.add.text(180,65,'',{fontSize:'11px',color:'#fbbf24'}).setOrigin(.5);
@@ -49,19 +51,19 @@ export class GameScene extends Phaser.Scene {
     this.signalLampA=this.add.circle(292,91,5,0x22c55e).setStrokeStyle(1,0xe2e8f0,.55);
     this.signalLampB=this.add.circle(308,91,5,0x334155).setStrokeStyle(1,0xe2e8f0,.35);
     this.status=this.add.text(180,115,'',{fontSize:'11px',color:'#cbd5e1'}).setOrigin(.5);
-    const sound=this.add.text(318,115,'SOUND ON',{fontSize:'9px',color:'#fbbf24'}).setOrigin(.5).setInteractive();
-    sound.on('pointerdown',()=>{this.soundEnabled=!this.soundEnabled;sound.setText(this.soundEnabled?'SOUND ON':'SOUND OFF');if(this.soundEnabled)this.startAmbient();else if(this.musicGain&&this.audioContext)this.musicGain.gain.setTargetAtTime(0,this.audioContext.currentTime,.08);});
+    const sound=this.add.text(318,115,this.soundEnabled?'SOUND ON':'SOUND OFF',{fontSize:'9px',color:'#fbbf24'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-28,-18,56,36),Phaser.Geom.Rectangle.Contains);
+    sound.on('pointerdown',()=>{this.soundEnabled=!this.soundEnabled;this.progress.sound=this.soundEnabled;saveProgress(this.progress);sound.setText(this.soundEnabled?'SOUND ON':'SOUND OFF');if(this.soundEnabled){if(this.progress.music)this.startAmbient();}else if(this.musicGain&&this.audioContext)this.musicGain.gain.setTargetAtTime(0,this.audioContext.currentTime,.08);});
     this.boardLayer=this.add.container(0,0);
     this.add.text(180,455,'WAITING BAY',{fontSize:'10px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(.5);
     this.bayText=this.add.text(180,480,'',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5);
     this.add.text(180,515,'PASSENGER STREAM',{fontSize:'9px',color:'#94a3b8'}).setOrigin(.5);
     this.add.text(180,500,'COINS: '+this.progress.coins,{fontSize:'11px',color:'#fbbf24'}).setOrigin(.5);
     this.add.text(180,550,'CHOOSE YOUR NEXT ROUTE FROM THE CITY MAP',{fontSize:'8px',color:'#94a3b8'}).setOrigin(.5);
-    const undo=this.add.text(85,620,'↶ UNDO',{fontSize:'12px',color:'#38bdf8'}).setOrigin(.5).setInteractive();
+    const undo=this.add.text(85,620,'↶ UNDO',{fontSize:'12px',color:'#38bdf8'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-34,-22,68,44),Phaser.Geom.Rectangle.Contains);
     undo.on('pointerdown',()=>{if(this.history.length){this.state=this.history.pop()!;this.refresh();this.playTone(420,70);}});
-    const pause=this.add.text(180,620,'Ⅱ PAUSE',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5).setInteractive();
+    const pause=this.add.text(180,620,'Ⅱ PAUSE',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-40,-22,80,44),Phaser.Geom.Rectangle.Contains);
     pause.on('pointerdown',()=>{this.paused=!this.paused;this.status.setText(this.paused?'PAUSED — TAP PAUSE TO RESUME':levelStatus(this.state));});
-    const home=this.add.text(278,620,'HOME',{fontSize:'12px',color:'#fbbf24'}).setOrigin(.5).setInteractive();
+    const home=this.add.text(278,620,'HOME',{fontSize:'12px',color:'#fbbf24'}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-34,-22,68,44),Phaser.Geom.Rectangle.Contains);
     home.on('pointerdown',()=>{if(this.paused)return;this.cameras.main.fadeOut(180,8,18,28);this.cameras.main.once('camerafadeoutcomplete',()=>this.scene.start('Home'));});
     this.addBoosterButton(48,600,'HINT','hint',30);
     this.addBoosterButton(136,600,'+ BAY','extra-slot',80);
@@ -160,7 +162,7 @@ export class GameScene extends Phaser.Scene {
     this.tweens.add({targets:this.status,scale:1.08,duration:100,yoyo:true});
   }
   private addBoosterButton(x:number,y:number,label:string,id:BoosterId,cost:number):void{
-    const button=this.add.text(x,y,label,{fontSize:'9px',color:'#f8fafc',backgroundColor:'#263d50',padding:{x:6,y:6}}).setOrigin(.5).setInteractive();
+    const button=this.add.text(x,y,label,{fontSize:'9px',color:'#f8fafc',backgroundColor:'#263d50',padding:{x:6,y:6}}).setOrigin(.5).setInteractive(new Phaser.Geom.Rectangle(-38,-22,76,44),Phaser.Geom.Rectangle.Contains);
     button.on('pointerdown',()=>{if(this.paused||this.state.result!=='playing')return;let next=this.progress;if(next.inventory[id]===0){const purchased=buyBooster(next,id,1);if(!purchased){this.status.setText('NOT ENOUGH COINS');return;}next=purchased;}const result=activateBooster(this.state,next,id,cost);if(!result){this.status.setText('NOT ENOUGH COINS');return;}this.progress=result.progress;this.state=result.state;saveProgress(this.progress);if(id==='undo'&&this.history.length)this.state=this.history.pop()!;this.showBoosterFeedback(id==='hint'?'ROUTE HINT':id==='extra-slot'?'WAITING BAY +1':id==='shuffle'?'PASSENGERS SHUFFLED':'MOVE UNDONE');this.playTone(id==='hint'?660:id==='extra-slot'?740:id==='shuffle'?520:440,95);if(result.hintVehicleId){const v=this.state.grid.vehicles.find(item=>item.id===result.hintVehicleId);if(v){const ring=this.add.circle(LEFT+v.x*CELL+CELL/2,TOP+v.y*CELL+CELL/2,22).setStrokeStyle(3,0xfbbf24);this.tweens.add({targets:ring,alpha:0,scale:1.8,duration:650,onComplete:()=>ring.destroy()});}}this.refresh();});
   }
   private emitExitSparks(x:number,y:number,color:number):void{
@@ -181,9 +183,9 @@ export class GameScene extends Phaser.Scene {
       if(this.paused||this.state.result!=='playing')return;
       idleTween.pause();
       const next=attemptVehicleExit(this.state,vehicle.id);
-      if(next===this.state){this.tweens.add({targets:group,x:px+5,duration:45,yoyo:true,repeat:2,onComplete:()=>idleTween.resume()});this.playTone(145,85);if('vibrate' in navigator)navigator.vibrate?.(35);return;}
+      if(next===this.state){this.tweens.add({targets:group,x:px+5,duration:45,yoyo:true,repeat:2,onComplete:()=>idleTween.resume()});this.playTone(145,85);if(this.progress.vibration&&'vibrate' in navigator)navigator.vibrate?.(35);return;}
       this.history.push(structuredClone(this.state));
-      this.tweens.add({targets:group,alpha:0,scaleX:.75,scaleY:.75,duration:180,onComplete:()=>{this.emitExitSparks(px,py,Phaser.Display.Color.HexStringToColor(vehicle.color).color);this.state=next;this.playTone(520,80);if('vibrate' in navigator)navigator.vibrate?.(18);this.refresh();}});
+      this.tweens.add({targets:group,alpha:0,scaleX:.75,scaleY:.75,duration:180,onComplete:()=>{this.emitExitSparks(px,py,Phaser.Display.Color.HexStringToColor(vehicle.color).color);this.state=next;this.playTone(520,80);if(this.progress.vibration&&'vibrate' in navigator)navigator.vibrate?.(18);this.refresh();}});
     });
     this.boardLayer.add(group);
   }
@@ -212,7 +214,7 @@ export class GameScene extends Phaser.Scene {
     this.resultShown=true;
     const title=won?'CHOWK CLEAR!':'TRY AGAIN';
     this.playTone(won?880:165,won?260:220);
-    if('vibrate' in navigator)navigator.vibrate?.(won?[45,35,90]:[90,45,90]);
+    if(this.progress.vibration&&'vibrate' in navigator)navigator.vibrate?.(won?[45,35,90]:[90,45,90]);
     if(won)for(let i=0;i<18;i++){const bit=this.add.rectangle(Phaser.Math.Between(42,318),Phaser.Math.Between(180,250),Phaser.Math.Between(3,6),Phaser.Math.Between(5,10),Phaser.Display.Color.GetColor(Phaser.Math.Between(80,255),Phaser.Math.Between(80,255),Phaser.Math.Between(80,255)));this.tweens.add({targets:bit,y:Phaser.Math.Between(340,420),x:bit.x+Phaser.Math.Between(-45,45),angle:Phaser.Math.Between(-180,180),alpha:0,duration:Phaser.Math.Between(650,1050),onComplete:()=>bit.destroy()});}
     if(won){this.progress=awardLevel(this.progress,this.state.grid.level.id,starsForMoves(this.state.grid.moves,this.state.par));saveProgress(this.progress);}
     const stars=won?'★'.repeat(starsForMoves(this.state.grid.moves,this.state.par)):'';
