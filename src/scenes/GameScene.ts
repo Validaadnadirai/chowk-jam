@@ -96,6 +96,20 @@ export class GameScene extends Phaser.Scene {
         this.boardLayer.add(this.add.rectangle(px,py,3,3,0xfbbf24,.5));
       }
     }
+    // Junction dressing: compact curb paint, reflective corner studs and road arrows.
+    // All decoration is static vector geometry, so it adds no texture or animation cost.
+    const roadW=this.state.grid.level.width*CELL,roadH=this.state.grid.level.height*CELL;
+    const trim=this.add.graphics();
+    trim.lineStyle(3,0xfbbf24,.62);
+    trim.strokeRect(LEFT-5,TOP-5,roadW+10,roadH+10);
+    trim.lineStyle(2,0xe2e8f0,.32);
+    for(let i=0;i<this.state.grid.level.width;i++){
+      const sx=LEFT+i*CELL+CELL/2;
+      if(i%2===0){trim.lineBetween(sx-5,TOP+roadH+15,sx+5,TOP+roadH+15);trim.lineBetween(sx-5,TOP-15,sx+5,TOP-15);}
+    }
+    trim.fillStyle(0xfbbf24,.48);
+    for(const [sx,sy] of [[LEFT-11,TOP-11],[LEFT+roadW+11,TOP-11],[LEFT-11,TOP+roadH+11],[LEFT+roadW+11,TOP+roadH+11]]) trim.fillCircle(sx,sy,2.2);
+    this.boardLayer.add(trim);
     // Subtle centre guide markings make the grid read as a connected junction.
     for(let x=0;x<this.state.grid.level.width;x++){
       const px=LEFT+x*CELL+CELL/2;
@@ -140,14 +154,24 @@ export class GameScene extends Phaser.Scene {
       group.add(this.add.ellipse(-11,-5,12,11,0x343c46));group.add(this.add.ellipse(11,-5,12,11,0x343c46));
       group.add(this.add.triangle(-13,-12,-8,-9,-18,-19,0xe2e8f0));group.add(this.add.triangle(13,-12,8,-9,18,-19,0xe2e8f0));
       group.add(this.add.ellipse(0,7,18,12,0x111827));group.add(this.add.circle(-5,1,2,0xfbbf24));group.add(this.add.circle(5,1,2,0xfbbf24));
+      // Muzzle, nostrils and ear highlights give the buffalo a clearer silhouette.
+      group.add(this.add.ellipse(0,8,11,7,0x59616b));
+      group.add(this.add.circle(-2,8,1,0x111827));group.add(this.add.circle(2,8,1,0x111827));
+      group.add(this.add.triangle(-16,-3,-12,-1,-20,4,0x59616b));group.add(this.add.triangle(16,-3,12,-1,20,4,0x59616b));
     }else if(obstacle.kind==='thela'){
       group.add(this.add.rectangle(0,1,30,19,0xb77932).setStrokeStyle(2,0xf5c06a));
       group.add(this.add.rectangle(0,-8,32,5,0x7c3f22));group.add(this.add.circle(-11,14,4,0x111827));group.add(this.add.circle(11,14,4,0x111827));
       group.add(this.add.circle(-7,-2,4,0xfbbf24));group.add(this.add.circle(4,-2,4,0x65a30d));
+      // Produce crates, handle and a striped fabric canopy make the handcart legible.
+      group.add(this.add.rectangle(0,-12,30,5,0xe7a64c).setStrokeStyle(1,0xf8d28a));
+      group.add(this.add.line(15,4,15,-2,23,-9,0xd6a06a).setLineWidth(2));
+      group.add(this.add.rectangle(-7,-2,2,7,0x854d0e));group.add(this.add.rectangle(5,-2,2,7,0x365314));
     }else{
       group.add(this.add.rectangle(0,1,34,22,0xf8fafc).setStrokeStyle(1,0xcbd5e1));
       for(let i=-1;i<=1;i++)group.add(this.add.rectangle(i*10,1,6,22,0xef4444));
+      group.add(this.add.rectangle(0,-13,34,4,0xfbbf24));
       group.add(this.add.circle(-13,-13,3,0xfbbf24));group.add(this.add.circle(13,-13,3,0xfbbf24));
+      group.add(this.add.rectangle(-12,15,5,5,0x64748b));group.add(this.add.rectangle(12,15,5,5,0x64748b));
     }
     this.boardLayer.add(group);
     if(obstacle.kind==='bhains'){

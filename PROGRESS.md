@@ -97,3 +97,10 @@
 - [x] Refined existing vector vehicle art with body seams, bus divisions, cargo-bed detailing, front/rear light accents and alloy wheel hubs; renderer API, vehicle types, orientation, hitboxes and level data remain unchanged.
 - [ ] Verify the new map composition and vehicle readability on small Android screens; no physical-device QA is claimed.
 - [ ] GitHub CI for Batch 12 is pending; do not treat it as passed until the exact head reports success.
+
+## Batch 13 — Junction Environment & Obstacle Art (CI pending)
+- [x] Added static junction dressing with curb outline, broken road-edge markings and reflective corner studs.
+- [x] Refined buffalo, handcart and barricade illustrations with additional silhouette and material details.
+- [x] Kept all obstacle kinds, collision coordinates, level JSON, movement rules and gameplay state unchanged.
+- [ ] Verify board framing and obstacle readability across small Android screens; physical-device QA is not yet done.
+- [ ] GitHub CI for this batch is pending; do not mark it passed until the exact commit succeeds.
