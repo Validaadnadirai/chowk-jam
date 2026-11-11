@@ -1,0 +1,9 @@
+export type Direction = 'up' | 'down' | 'left' | 'right';
+export type Orientation = 'horizontal' | 'vertical';
+export type VehicleType = 'auto' | 'erickshaw' | 'tempo' | 'bus';
+export interface Cell { x: number; y: number }
+export interface Vehicle { id: string; type: VehicleType; color: string; x: number; y: number; length: number; orientation: Orientation; facing: Direction; seats: number }
+export interface Obstacle extends Cell { kind: 'thela' | 'bhains' | 'barrier' }
+export interface LevelDefinition { id: number; name: string; width: number; height: number; moveLimit?: number; vehicles: Vehicle[]; obstacles: Obstacle[] }
+export interface GameState { level: LevelDefinition; vehicles: Vehicle[]; moves: number; exitedIds: string[] }
+export interface ExitOptions { closedCells?: Cell[] }
