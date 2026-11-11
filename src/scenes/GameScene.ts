@@ -4,47 +4,74 @@ import level2 from '../data/levels/level-2.json';
 import level3 from '../data/levels/level-3.json';
 import level4 from '../data/levels/level-4.json';
 import level5 from '../data/levels/level-5.json';
-import {createGameState,exitVehicle,isWon} from '../core/grid';
-import {parseLevel} from '../core/levelLoader';
-import {History} from '../core/history';
-import type {GameState,LevelDefinition,Vehicle} from '../core/types';
-const LEVELS:LevelDefinition[]=[parseLevel(level1),parseLevel(level2),parseLevel(level3),parseLevel(level4),parseLevel(level5)];
-const CELL=48,LEFT=36,TOP=150;
+import level6 from '../data/levels/level-6.json';
+import level7 from '../data/levels/level-7.json';
+import level8 from '../data/levels/level-8.json';
+import level9 from '../data/levels/level-9.json';
+import level10 from '../data/levels/level-10.json';
+import { createFullGame, attemptVehicleExit, levelStatus, starsForMoves, type FullGameState } from '../core/gameplay';
+import { parseLevel } from '../core/levelLoader';
+import type { LevelDefinition, Vehicle } from '../core/types';
+const LEVELS:LevelDefinition[]=[level1,level2,level3,level4,level5,level6,level7,level8,level9,level10].map(parseLevel);
+const CELL=48,LEFT=36,TOP=154;
 export class GameScene extends Phaser.Scene {
-  private state!:GameState;
-  private history=new History();
+  private state!:FullGameState;
+  private history:FullGameState[]=[];
   private boardLayer!:Phaser.GameObjects.Container;
   private status!:Phaser.GameObjects.Text;
   private levelTitle!:Phaser.GameObjects.Text;
+  private signalText!:Phaser.GameObjects.Text;
+  private bayText!:Phaser.GameObjects.Text;
+  private paused=false;
+  private audioContext?:AudioContext;
   constructor(){super('Game');}
   create():void{
-    this.state=createGameState(LEVELS[0]);
     this.cameras.main.setBackgroundColor('#101923');
-    this.add.text(180,42,'CHOWK JAM',{fontSize:'24px',color:'#f8fafc',fontStyle:'bold'}).setOrigin(0.5);
-    this.levelTitle=this.add.text(180,82,'LEVEL 1 • '+LEVELS[0].name.toUpperCase(),{fontSize:'11px',color:'#fbbf24'}).setOrigin(0.5);
-    this.status=this.add.text(180,112,'Tap a vehicle to send it out',{fontSize:'12px',color:'#cbd5e1'}).setOrigin(0.5);
-    this.boardLayer=this.add.container(0,0);this.drawBoard();
-    this.add.text(180,460,'CHOOSE A TEST LEVEL',{fontSize:'10px',color:'#94a3b8'}).setOrigin(0.5);
+    this.add.text(180,28,'CHOWK JAM',{fontSize:'24px',color:'#f8fafc',fontStyle:'bold'}).setOrigin(.5);
+    this.levelTitle=this.add.text(180,65,'',{fontSize:'11px',color:'#fbbf24'}).setOrigin(.5);
+    this.signalText=this.add.text(180,91,'SIGNAL: GREEN',{fontSize:'10px',color:'#86efac'}).setOrigin(.5);
+    this.status=this.add.text(180,115,'',{fontSize:'11px',color:'#cbd5e1'}).setOrigin(.5);
+    this.boardLayer=this.add.container(0,0);
+    this.add.text(180,455,'WAITING BAY',{fontSize:'10px',color:'#fbbf24',fontStyle:'bold'}).setOrigin(.5);
+    this.bayText=this.add.text(180,480,'',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5);
+    this.add.text(180,515,'PASSENGER STREAM',{fontSize:'9px',color:'#94a3b8'}).setOrigin(.5);
+    this.add.text(180,550,'SELECT LEVEL',{fontSize:'9px',color:'#94a3b8'}).setOrigin(.5);
     LEVELS.forEach((level,index)=>{
-      const button=this.add.text(44+index*68,490,String(index+1),{fontSize:'16px',color:'#101923',backgroundColor:'#fbbf24',padding:{x:12,y:8}}).setOrigin(0.5).setInteractive({useHandCursor:true});
-      button.on('pointerdown',()=>this.loadSelectedLevel(level));
+      const x=22+index*35;
+      const button=this.add.text(x,575,String(index+1),{fontSize:'12px',color:'#101923',backgroundColor:'#fbbf24',padding:{x:8,y:6}}).setOrigin(.5).setInteractive({useHandCursor:true});
+      button.on('pointerdown',()=>this.loadLevel(level));
     });
-    const undo=this.add.text(180,540,'↶  UNDO',{fontSize:'16px',color:'#101923',backgroundColor:'#38bdf8',padding:{x:18,y:9}}).setOrigin(0.5).setInteractive({useHandCursor:true});
-    undo.on('pointerdown',()=>{if(this.history.canUndo){this.state=this.history.undo(this.state);this.status.setText('Last move undone');this.drawBoard();}});
-    const home=this.add.text(180,600,'HOME',{fontSize:'13px',color:'#fbbf24'}).setOrigin(0.5).setInteractive({useHandCursor:true});
+    const undo=this.add.text(85,620,'↶ UNDO',{fontSize:'12px',color:'#38bdf8'}).setOrigin(.5).setInteractive();
+    undo.on('pointerdown',()=>{if(this.history.length){this.state=this.history.pop()!;this.refresh();this.playTone(420,70);}});
+    const pause=this.add.text(180,620,'Ⅱ PAUSE',{fontSize:'12px',color:'#f8fafc'}).setOrigin(.5).setInteractive();
+    pause.on('pointerdown',()=>{this.paused=!this.paused;this.status.setText(this.paused?'PAUSED — TAP PAUSE TO RESUME':levelStatus(this.state));});
+    const home=this.add.text(278,620,'HOME',{fontSize:'12px',color:'#fbbf24'}).setOrigin(.5).setInteractive();
     home.on('pointerdown',()=>this.scene.start('Home'));
+    this.loadLevel(LEVELS[0]);
   }
-  private loadSelectedLevel(level:LevelDefinition):void{
-    this.state=createGameState(level);this.history.clear();this.levelTitle.setText('LEVEL '+level.id+' • '+level.name.toUpperCase());this.status.setText('Tap a vehicle to send it out');this.drawBoard();
+  private loadLevel(level:LevelDefinition):void{
+    this.state=createFullGame(level);this.history=[];this.paused=false;this.levelTitle.setText('LEVEL '+level.id+' • '+level.name.toUpperCase());this.refresh();
   }
-  private drawBoard():void{
+  private refresh():void{
     this.boardLayer.removeAll(true);
-    for(let y=0;y<this.state.level.height;y++)for(let x=0;x<this.state.level.width;x++)this.boardLayer.add(this.add.rectangle(LEFT+x*CELL+CELL/2,TOP+y*CELL+CELL/2,CELL-3,CELL-3,0x263544).setStrokeStyle(1,0x3c5062));
-    for(const obstacle of this.state.level.obstacles){
-      const icon=obstacle.kind==='bhains'?'🐃':obstacle.kind==='thela'?'🛒':'🚧';
-      this.boardLayer.add(this.add.text(LEFT+obstacle.x*CELL+CELL/2,TOP+obstacle.y*CELL+CELL/2,icon,{fontSize:'23px'}).setOrigin(0.5));
+    for(let y=0;y<this.state.grid.level.height;y++)for(let x=0;x<this.state.grid.level.width;x++){
+      this.boardLayer.add(this.add.rectangle(LEFT+x*CELL+CELL/2,TOP+y*CELL+CELL/2,CELL-3,CELL-3,0x263544).setStrokeStyle(1,0x3c5062));
     }
-    for(const vehicle of this.state.vehicles)this.drawVehicle(vehicle);
+    for(const obstacle of this.state.grid.level.obstacles){
+      const icon=obstacle.kind==='bhains'?'🐃':obstacle.kind==='thela'?'🛒':'🚧';
+      this.boardLayer.add(this.add.text(LEFT+obstacle.x*CELL+CELL/2,TOP+obstacle.y*CELL+CELL/2,icon,{fontSize:'23px'}).setOrigin(.5));
+    }
+    for(const vehicle of this.state.grid.vehicles)this.drawVehicle(vehicle);
+    const bay=this.state.bay.map(item=>item.vehicle.type.toUpperCase()+' '+item.boarded+'/'+item.vehicle.seats).join('   ');
+    this.bayText.setText(bay||'— EMPTY —');
+    const colors=this.state.passengerStream.map((p,i)=>this.add.circle(48+i*22,535,6,Phaser.Display.Color.HexStringToColor(p.color).color));
+    colors.forEach(circle=>this.boardLayer.add(circle));
+    this.status.setText(levelStatus(this.state));
+    const signal=this.state.signal;
+    this.signalText.setText(signal?'SIGNAL: '+(Math.floor(this.state.grid.moves/signal.flipEvery)%2===0?'A OPEN • B CLOSED':'B OPEN • A CLOSED')+'  NEXT '+(Math.floor((this.state.grid.moves+1)/signal.flipEvery)%2===0?'A':'B'):'SIGNAL: NOT ACTIVE');
+    this.signalText.setColor(this.state.result==='failed'?'#f87171':'#86efac');
+    if(this.state.result==='won')this.showResult(true);
+    if(this.state.result==='failed')this.showResult(false);
   }
   private drawVehicle(vehicle:Vehicle):void{
     const w=vehicle.orientation==='horizontal'?vehicle.length*CELL-5:CELL-5;
@@ -53,13 +80,26 @@ export class GameScene extends Phaser.Scene {
     const py=TOP+vehicle.y*CELL+(vehicle.orientation==='vertical'?h/2+2.5:CELL/2);
     const rect=this.add.rectangle(px,py,w,h,Phaser.Display.Color.HexStringToColor(vehicle.color).color).setStrokeStyle(2,0xffffff).setInteractive({useHandCursor:true});
     rect.on('pointerdown',()=>{
-      const next=exitVehicle(this.state,vehicle.id);
-      if(next===this.state){this.status.setText('Blocked! Pehle raasta saaf karo.');return;}
-      this.history.push(this.state);this.state=next;
-      this.status.setText(isWon(this.state)?'Chowk clear! You win!':'Moves: '+this.state.moves);
-      this.drawBoard();
+      if(this.paused||this.state.result!=='playing')return;
+      const next=attemptVehicleExit(this.state,vehicle.id);
+      if(next===this.state){this.tweens.add({targets:rect,x:px+5,y:py,duration:45,yoyo:true,repeat:2});this.playTone(130,90);if('vibrate' in navigator)navigator.vibrate?.(35);return;}
+      this.history.push(structuredClone(this.state));
+      this.tweens.add({targets:rect,alpha:0,scaleX:.75,scaleY:.75,duration:180,onComplete:()=>{this.state=next;this.playTone(640,100);if('vibrate' in navigator)navigator.vibrate?.(18);this.refresh();}});
     });
     this.boardLayer.add(rect);
-    this.boardLayer.add(this.add.text(px,py,vehicle.type==='erickshaw'?'E-R':vehicle.type.toUpperCase(),{fontSize:'10px',color:'#101923',fontStyle:'bold'}).setOrigin(0.5));
+    const label=vehicle.type==='erickshaw'?'E-R':vehicle.type.toUpperCase();
+    this.boardLayer.add(this.add.text(px,py,label,{fontSize:'10px',color:'#101923',fontStyle:'bold'}).setOrigin(.5));
+  }
+  private playTone(frequency:number,duration:number):void{
+    try{this.audioContext??=new AudioContext();const oscillator=this.audioContext.createOscillator();const gain=this.audioContext.createGain();oscillator.frequency.value=frequency;gain.gain.setValueAtTime(.035,this.audioContext.currentTime);gain.gain.exponentialRampToValueAtTime(.001,this.audioContext.currentTime+duration/1000);oscillator.connect(gain);gain.connect(this.audioContext.destination);oscillator.start();oscillator.stop(this.audioContext.currentTime+duration/1000);}catch{/* Audio is optional; gameplay remains available without it. */}
+  }
+  private showResult(won:boolean):void{
+    const title=won?'CHOWK CLEAR!':'TRY AGAIN';
+    const stars=won?'★'.repeat(starsForMoves(this.state.grid.moves,this.state.par)):'';
+    const panel=this.add.rectangle(180,300,270,120,0x0b1220,.96).setStrokeStyle(2,won?0xfbbf24:0xf87171);
+    const text=this.add.text(180,278,title+'\n'+stars+'\n'+(won?'MOVES: '+this.state.grid.moves:'REASON: '+this.state.failReason),{fontSize:'18px',color:'#f8fafc',align:'center',lineSpacing:8}).setOrigin(.5);
+    const action=this.add.text(180,340,won?'NEXT LEVEL':'RETRY',{fontSize:'12px',color:'#101923',backgroundColor:'#fbbf24',padding:{x:14,y:8}}).setOrigin(.5).setInteractive();
+    action.on('pointerdown',()=>{if(won){const next=LEVELS.find(level=>level.id===this.state.grid.level.id+1);if(next)this.loadLevel(next);else this.loadLevel(LEVELS[0]);}else this.loadLevel(LEVELS.find(level=>level.id===this.state.grid.level.id)!);});
+    this.boardLayer.add([panel,text,action]);
   }
 }
