@@ -2,7 +2,8 @@ import {describe,it,expect} from 'vitest';
 import {activateBooster} from './boosters';
 import {createFullGame} from './gameplay';
 import {DEFAULT_PROGRESS} from './progression';
-import type {LevelDefinition,PlayerProgress} from './progression';
+import type {PlayerProgress} from './progression';
+import type {LevelDefinition} from './types';
 
 const level:LevelDefinition={id:1,name:'booster test',width:6,height:6,vehicles:[{id:'auto-1',type:'auto',color:'#f5a623',x:2,y:2,length:1,orientation:'horizontal',facing:'right',seats:1}],obstacles:[]};
 const game=()=>createFullGame(level);
